@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.su.mapper.OrderMapper">
+
+    <insert id="insert" parameterType="Orders" useGeneratedKeys="true" keyProperty="id">
+        insert into orders
+        (number, order_type, status, user_id, coupon_id, warehouse_id, address_book_id, order_time, checkout_time, pay_method, pay_status, amount, remark,
+         phone, address, consignee, cancel_time, cancel_reason)
+        values (#{number}, ifnull(#{orderType}, 1), #{status}, #{userId}, #{couponId}, #{warehouseId}, #{addressBookId}, #{orderTime}, #{checkoutTime}, #{payMethod},
+                #{payStatus}, #{amount}, #{remark}, #{phone}, #{address}, #{consignee}, #{cancelTime}, #{cancelReason})
+    </insert>
+
+    <update id="update" parameterType="com.su.entity.Orders">
+        update orders
+        <set>
+            <if test="cancelReason != null and cancelReason!='' ">
+                cancel_reason=#{cancelReason},
+            </if>
+            <if test="cancelTime != null">
+                cancel_time=#{cancelTime},
+            </if>
+            <if test="payStatus != null">
+                pay_status=#{payStatus},
+            </if>
+            <if test="payMethod != null">
+                pay_method=#{payMethod},
+            </if>
+            <if test="checkoutTime != null">
+                checkout_time=#{checkoutTime},
+            </if>
+            <if test="status != null">
+                status = #{status},
+            </if>
+            <if test="orderType != null">
+                order_type = #{orderType},
+            </if>
+            <if test="couponId != null">
+                coupon_id = #{couponId},
+            </if>
+            <if test="warehouseId != null">
+                warehouse_id = #{warehouseId}
+            </if>
+        </set>
+        where id = #{id}
+    </update>
+    <update id="updateList">
+        update orders
+        <set>
+            <if test="ordersList2 != null and ordersList2.size() > 0 and ordersList2[0].cancelReason != null and ordersList2[0].cancelReason!=''">
+                cancel_reason = #{ordersList2[0].cancelReason},
+            </if>
+            <if test="ordersList2 != null and ordersList2.size() > 0 and ordersList2[0].cancelTime != null">
+                cancel_time = #{ordersList2[0].cancelTime},
+            </if>
+            <if test="ordersList2 != null and ordersList2.size() > 0 and ordersList2[0].status != null">
+                status = #{ordersList2[0].status},
+            </if>
+        </set>
+        where id in
+        <foreach item="order" collection="ordersList2" separator="," open="(" close=")">
+            #{order.id}
+        </foreach>
+    </update>
+
+
+    <select id="pageQuery" resultType="com.su.entity.Orders">
+            select * from orders
+            <where>
+                <if test="number != null and number!=''">
+                    and number like concat('%',#{number},'%')
+                </if>
+                <if test="phone != null and phone!=''">
+                    and phone like concat('%',#{phone},'%')
+                </if>
+                <if test="userId != null">
+                    and user_id = #{userId}
+                </if>
+                <if test="status != null">
+                    and status = #{status}
+                </if>
+                <if test="statusList != null and statusList.size() > 0">
+                    and status in
+                    <foreach item="s" collection="statusList" separator="," open="(" close=")">
+                        #{s}
+                    </foreach>
+                </if>
+                <if test="beginTime != null">
+                    and order_time &gt;= #{beginTime}
+                </if>
+                <if test="endTime != null">
+                    and order_time &lt;= #{endTime}
+                </if>
+            </where>
+            order by order_time desc
+    </select>
+    <select id="statistics" resultType="com.su.vo.OrderStatisticsVO">
+        select
+            sum(if(status = 2, 1, 0)) as toBeConfirmed,
+            sum(if(status = 3, 1, 0)) as confirmed,
+            sum(if(status = 4, 1, 0)) as deliveryInProgress
+        from orders
+        where status in (2, 3, 4)
+    </select>
+    <select id="countByMap" resultType="java.lang.Integer">
+            select count(1) from orders
+            <where>
+                <if test="status != null">
+                    and status = #{status}
+                </if>
+                <if test="begin != null">
+                    and order_time &gt;= #{begin}
+                </if>
+                <if test="end != null">
+                    and order_time &lt;= #{end}
+                </if>
+            </where>
+    </select>
+    <select id="sumByMap" resultType="java.lang.Double">
+            select sum(amount) from orders
+            <where>
+                <if test="status != null">
+                    and status = #{status}
+                </if>
+                <if test="begin != null">
+                    and order_time &gt;= #{begin}
+                </if>
+                <if test="end != null">
+                    and order_time &lt;= #{end}
+                </if>
+            </where>
+    </select>
+
+    <select id="countActiveOrderByUserAndSku" resultType="java.lang.Integer">
+        select count(distinct o.id)
+        from orders o
+                 join order_detail d on d.order_id = o.id
+        where o.user_id = #{userId}
+          and o.status != 7
+          and o.order_type = 1
+          and d.sku_id = #{skuId}
+    </select>
+
+    <select id="countActiveOrderByUserAndBundle" resultType="java.lang.Integer">
+        select count(distinct o.id)
+        from orders o
+                 join order_detail d on d.order_id = o.id
+        where o.user_id = #{userId}
+          and o.status != 7
+          and o.order_type = 1
+          and d.bundle_id = #{bundleId}
+    </select>
+
+    <select id="countSignedOrderByUserAndSpu" resultType="java.lang.Integer">
+        select count(distinct o.id)
+        from orders o
+                 join order_detail d on d.order_id = o.id
+                 left join shoe_sku sk on sk.id = d.sku_id
+        where o.user_id = #{userId}
+          and o.status in (6, 8)
+          and o.pay_status = 1
+          and (
+            d.spu_id = #{spuId}
+            or (d.spu_id is null and sk.spu_id = #{spuId})
+          )
+    </select>
+
+    <select id="countByUserId" resultType="com.su.vo.UserOrderStatisticsVO">
+        select
+            sum(if(status = 1, 1, 0)) as toBePaid,
+            sum(if(status = 2, 1, 0)) as toBeShipped,
+            sum(if(status in (3, 4, 5), 1, 0)) as toBeReceived,
+            sum(if(status = 6, 1, 0)) as toBeReviewed
+        from orders
+        where user_id = #{userId}
+    </select>
+
+</mapper>
+
+

@@ -1,0 +1,333 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.su.mapper.ExperiencePostMapper">
+
+    <!-- 结果映射 - 管理员端心得VO -->
+    <resultMap id="ExperiencePostAdminVOResultMap" type="com.su.vo.ExperiencePostAdminVO">
+        <id column="id" property="id"/>
+        <result column="userId" property="userId"/>
+        <result column="userName" property="userName"/>
+        <result column="userAvatar" property="userAvatar"/>
+        <result column="contentSummary" property="contentSummary"/>
+        <result column="content" property="content"/>
+        <result column="productType" property="productType"/>
+        <result column="productTypeName" property="productTypeName"/>
+        <result column="productId" property="productId"/>
+        <result column="productName" property="productName"/>
+        <result column="productImage" property="productImage"/>
+        <result column="images" property="images" typeHandler="com.su.handler.JsonListTypeHandler"/>
+        <result column="likeCount" property="likeCount"/>
+        <result column="commentCount" property="commentCount"/>
+        <result column="hidden" property="hidden"/>
+        <result column="createTime" property="createTime"/>
+        <result column="updateTime" property="updateTime"/>
+    </resultMap>
+
+    <!-- 结果映射 - 普通心得VO -->
+    <resultMap id="ExperiencePostVOResultMap" type="com.su.vo.ExperiencePostVO">
+        <id column="id" property="id"/>
+        <result column="userId" property="userId"/>
+        <result column="userName" property="userName"/>
+        <result column="userAvatar" property="userAvatar"/>
+        <result column="content" property="content"/>
+        <result column="productType" property="productType"/>
+        <result column="productId" property="productId"/>
+        <result column="images" property="images" typeHandler="com.su.handler.JsonListTypeHandler"/>
+        <result column="likeCount" property="likeCount"/>
+        <result column="commentCount" property="commentCount"/>
+        <result column="createTime" property="createTime"/>
+        <result column="updateTime" property="updateTime"/>
+    </resultMap>
+
+    <!-- 插入体验心得 -->
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        insert into experience_post (user_id, content, product_type, product_id, images, like_count, comment_count, hidden, create_time, update_time)
+        values (#{userId}, #{content}, #{productType}, #{productId}, #{images}, #{likeCount}, #{commentCount}, #{hidden}, #{createTime}, #{updateTime})
+    </insert>
+    
+    <!-- 根据商品查询心得列表（分页） -->
+    <select id="listByProduct" resultMap="ExperiencePostVOResultMap">
+        select
+            ep.id,
+            ep.user_id as userId,
+            u.name as userName,
+            u.avatar as userAvatar,
+            ep.content,
+            ep.product_type as productType,
+            ep.product_id as productId,
+            ep.images,
+            ep.like_count as likeCount,
+            ep.comment_count as commentCount,
+            ep.create_time as createTime,
+            ep.update_time as updateTime
+        from experience_post ep
+        left join user u on ep.user_id = u.id
+        where ep.product_type = #{productType}
+          and ep.product_id = #{productId}
+          and ep.hidden = 0
+        <choose>
+            <when test="sortBy == 'like'">
+                order by ep.like_count desc, ep.create_time desc
+            </when>
+            <otherwise>
+                order by ep.create_time desc
+            </otherwise>
+        </choose>
+    </select>
+    
+    <!-- 根据用户ID查询心得列表（分页） -->
+    <select id="listByUserId" resultMap="ExperiencePostVOResultMap">
+        select
+            ep.id,
+            ep.user_id as userId,
+            u.name as userName,
+            u.avatar as userAvatar,
+            ep.content,
+            ep.product_type as productType,
+            ep.product_id as productId,
+            ep.images,
+            ep.like_count as likeCount,
+            ep.comment_count as commentCount,
+            ep.create_time as createTime,
+            ep.update_time as updateTime
+        from experience_post ep
+        left join user u on ep.user_id = u.id
+        where ep.user_id = #{userId}
+          and ep.hidden = 0
+        order by ep.create_time desc
+    </select>
+    
+    <!-- 根据ID列表查询心得 -->
+    <select id="listByIds" resultType="com.su.entity.ExperiencePost">
+        select * from experience_post
+        where id in
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </select>
+    
+    <!-- 管理员分页查询心得列表（不过滤隐藏状态） -->
+    <select id="pageQueryAdmin" resultMap="ExperiencePostAdminVOResultMap">
+        select
+            ep.id,
+            ep.user_id as userId,
+            u.name as userName,
+            u.avatar as userAvatar,
+            ep.content,
+            ep.product_type as productType,
+            ep.product_id as productId,
+            ep.images,
+            ep.like_count as likeCount,
+            ep.comment_count as commentCount,
+            ep.hidden,
+            ep.create_time as createTime,
+            ep.update_time as updateTime
+        from experience_post ep
+        left join user u on ep.user_id = u.id
+        <where>
+            <if test="productType != null">
+                and ep.product_type = #{productType}
+            </if>
+            <if test="productId != null">
+                and ep.product_id = #{productId}
+            </if>
+            <if test="hidden != null">
+                and ep.hidden = #{hidden}
+            </if>
+        </where>
+        order by ep.create_time desc
+    </select>
+    
+    <!-- 管理员分页查询心得列表（支持多条件查询） -->
+    <select id="pageQueryForAdmin" resultMap="ExperiencePostAdminVOResultMap">
+        select
+            ep.id,
+            ep.user_id as userId,
+            u.name as userName,
+            u.avatar as userAvatar,
+            SUBSTRING(ep.content, 1, 100) as contentSummary,
+            ep.content,
+            ep.product_type as productType,
+            CASE ep.product_type
+                WHEN 1 THEN '鞋款'
+                WHEN 2 THEN '组合包'
+                WHEN 3 THEN '抽签'
+                WHEN 4 THEN '空投'
+                ELSE '未知'
+            END as productTypeName,
+            ep.product_id as productId,
+            CASE ep.product_type
+                WHEN 1 THEN shoe.name
+                WHEN 2 THEN bundle.name
+                WHEN 3 THEN draw.title
+                WHEN 4 THEN airdrop.title
+            END as productName,
+            CASE ep.product_type
+                WHEN 1 THEN (SELECT sku.image FROM shoe_sku sku WHERE sku.spu_id = shoe.id ORDER BY sku.is_default DESC, sku.id ASC LIMIT 1)
+                WHEN 2 THEN bundle.image
+                WHEN 3 THEN NULL
+                WHEN 4 THEN NULL
+            END as productImage,
+            ep.images,
+            ep.like_count as likeCount,
+            ep.comment_count as commentCount,
+            ep.hidden,
+            ep.create_time as createTime,
+            ep.update_time as updateTime
+        from experience_post ep
+        left join user u on ep.user_id = u.id
+        left join shoe_spu shoe on ep.product_type = 1 and ep.product_id = shoe.id
+        left join bundle bundle on ep.product_type = 2 and ep.product_id = bundle.id
+        left join draw draw on ep.product_type = 3 and ep.product_id = draw.id
+        left join airdrop airdrop on ep.product_type = 4 and ep.product_id = airdrop.id
+        <where>
+            <if test="dto.userName != null and dto.userName != ''">
+                and u.name like concat('%', #{dto.userName}, '%')
+            </if>
+            <if test="dto.contentKeyword != null and dto.contentKeyword != ''">
+                and ep.content like concat('%', #{dto.contentKeyword}, '%')
+            </if>
+            <if test="dto.productType != null">
+                and ep.product_type = #{dto.productType}
+            </if>
+            <if test="dto.productName != null and dto.productName != ''">
+                and (
+                    (ep.product_type = 1 and shoe.name like concat('%', #{dto.productName}, '%'))
+                    or (ep.product_type = 2 and bundle.name like concat('%', #{dto.productName}, '%'))
+                    or (ep.product_type = 3 and draw.title like concat('%', #{dto.productName}, '%'))
+                    or (ep.product_type = 4 and airdrop.title like concat('%', #{dto.productName}, '%'))
+                )
+            </if>
+            <if test="dto.startTime != null">
+                and ep.create_time &gt;= #{dto.startTime}
+            </if>
+            <if test="dto.endTime != null">
+                and ep.create_time &lt;= #{dto.endTime}
+            </if>
+            <if test="dto.hidden != null">
+                and ep.hidden = #{dto.hidden}
+            </if>
+        </where>
+        order by ep.create_time desc
+    </select>
+    
+    <!-- 批量更新心得隐藏状态 -->
+    <update id="batchUpdateHiddenStatus">
+        update experience_post
+        set hidden = #{hidden}, update_time = now()
+        where id in
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </update>
+    
+    <!-- 查询关注用户的心得列表（分页） -->
+    <select id="listByFollowing" resultMap="ExperiencePostVOResultMap">
+        select
+            ep.id,
+            ep.user_id as userId,
+            u.name as userName,
+            u.avatar as userAvatar,
+            ep.content,
+            ep.product_type as productType,
+            ep.product_id as productId,
+            ep.images,
+            ep.like_count as likeCount,
+            ep.comment_count as commentCount,
+            ep.create_time as createTime,
+            ep.update_time as updateTime
+        from experience_post ep
+        left join user u on ep.user_id = u.id
+        where ep.user_id in
+        <foreach collection="userIds" item="userId" open="(" separator="," close=")">
+            #{userId}
+        </foreach>
+          and ep.hidden = 0
+        <choose>
+            <when test="sortBy == 'like'">
+                order by ep.like_count desc, ep.create_time desc
+            </when>
+            <otherwise>
+                order by ep.create_time desc
+            </otherwise>
+        </choose>
+    </select>
+    
+    <!-- 查询用户点赞过的心得列表（分页） -->
+    <select id="listLikedByUser" resultMap="ExperiencePostVOResultMap">
+        select
+            ep.id,
+            ep.user_id as userId,
+            u.name as userName,
+            u.avatar as userAvatar,
+            ep.content,
+            ep.product_type as productType,
+            ep.product_id as productId,
+            ep.images,
+            ep.like_count as likeCount,
+            ep.comment_count as commentCount,
+            ep.create_time as createTime,
+            ep.update_time as updateTime
+        from experience_post ep
+        left join user u on ep.user_id = u.id
+        inner join experience_like epl on ep.id = epl.post_id
+        where epl.user_id = #{userId}
+          and epl.post_id is not null
+          and ep.hidden = 0
+        <choose>
+            <when test="sortBy == 'like'">
+                order by ep.like_count desc, ep.create_time desc
+            </when>
+            <otherwise>
+                order by epl.create_time desc
+            </otherwise>
+        </choose>
+    </select>
+    
+    <!-- 查询所有公开心得列表（分页） -->
+    <select id="listAllPublic" resultMap="ExperiencePostVOResultMap">
+        select
+            ep.id,
+            ep.user_id as userId,
+            u.name as userName,
+            u.avatar as userAvatar,
+            ep.content,
+            ep.product_type as productType,
+            ep.product_id as productId,
+            ep.images,
+            ep.like_count as likeCount,
+            ep.comment_count as commentCount,
+            ep.create_time as createTime,
+            ep.update_time as updateTime
+        from experience_post ep
+        left join user u on ep.user_id = u.id
+        <where>
+            ep.hidden = 0
+            <if test="keyword != null and keyword != ''">
+                and ep.content like concat('%', #{keyword}, '%')
+            </if>
+        </where>
+        <choose>
+            <when test="sortBy == 'like'">
+                order by ep.like_count desc, ep.create_time desc
+            </when>
+            <when test="sortBy == 'time_asc'">
+                order by ep.create_time asc
+            </when>
+            <otherwise>
+                order by ep.create_time desc
+            </otherwise>
+        </choose>
+    </select>
+    
+    <!-- 更新心得 -->
+    <update id="update">
+        update experience_post
+        set content = #{content},
+            images = #{images},
+            update_time = #{updateTime}
+        where id = #{id}
+    </update>
+    
+</mapper>

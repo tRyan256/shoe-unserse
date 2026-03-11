@@ -1,0 +1,39 @@
+su:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    host: localhost
+    port: 3306
+    database: shoe_universe
+    username: root
+    password: 123456
+  redis:
+    host: ${SU_REDIS_HOST:127.0.0.1}
+    port: ${SU_REDIS_PORT:6379}
+    password: ${SU_REDIS_PASSWORD:123456}
+    database: ${SU_REDIS_DATABASE:0}
+  aliOss:
+    endpoint: ${SU_ALIOSS_ENDPOINT:https://oss-cn-beijing.aliyuncs.com}
+    bucket-name: ${SU_ALIOSS_BUCKET:java-tanjunyi}
+    access-key-id: ${SU_ALIOSS_ACCESS_KEY_ID:}
+    access-key-secret: ${SU_ALIOSS_ACCESS_KEY_SECRET:}
+  wechat:
+    appid: ${SU_WECHAT_APPID:}
+    secret: ${SU_WECHAT_SECRET:}
+  baidu:
+    map:
+      ak: ${SU_BAIDU_MAP_AK:}
+  login-test:
+    enabled: true
+    phone: 13800138006
+    code: 149932
+
+sq:
+  mq:
+    host: 192.168.150.101
+    port: 5672
+    vhost: /su
+    username: shoe
+    password: 123456
+
+
+

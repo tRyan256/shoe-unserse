@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.su.mapper.LogisticsTraceMapper">
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        insert into logistics_trace
+        (logistics_id, status, location, description, operator, operate_time, create_time)
+        values
+        (#{logisticsId}, #{status}, #{location}, #{description}, #{operator}, #{operateTime}, #{createTime})
+    </insert>
+
+    <select id="listByLogisticsId" resultType="com.su.entity.LogisticsTrace">
+        select *
+        from logistics_trace
+        where logistics_id = #{logisticsId}
+        order by operate_time desc, id desc
+    </select>
+</mapper>
+

@@ -1,0 +1,132 @@
+@use './variables.scss' as *;
+@use 'sass:color';
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  font-family: 'Helvetica Neue', Helvetica, 'PingFang SC', 'Hiragino Sans GB',
+    'Microsoft YaHei', '微软雅黑', Arial, sans-serif;
+  font-size: 14px;
+  color: #333;
+  background-color: $content-bg-color;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+// 滚动条样式
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c0c4cc;
+  border-radius: 3px;
+  
+  &:hover {
+    background: #909399;
+  }
+}
+
+// 链接样式
+a {
+  color: $primary-color;
+  text-decoration: none;
+  
+  &:hover {
+    color: color.adjust($primary-color, $lightness: 10%);
+  }
+}
+
+// Element Plus 覆盖样式
+.el-button--primary {
+  --el-button-bg-color: #{$primary-color};
+  --el-button-border-color: #{$primary-color};
+}
+
+// 表格样式
+.el-table {
+  .el-table__header-wrapper {
+    th {
+      background-color: #fafafa !important;
+    }
+  }
+}
+
+// 分页样式
+.el-pagination {
+  margin-top: 20px;
+  justify-content: flex-end;
+}
+
+// 卡片样式
+.el-card {
+  border-radius: 4px;
+  
+  .el-card__header {
+    padding: 15px 20px;
+    border-bottom: 1px solid #ebeef5;
+  }
+}
+
+// 表单样式
+.el-form {
+  .el-form-item__label {
+    font-weight: normal;
+  }
+}
+
+// 对话框样式
+.el-dialog {
+  border-radius: 8px;
+  
+  .el-dialog__header {
+    padding: 15px 20px;
+    border-bottom: 1px solid #ebeef5;
+  }
+  
+  .el-dialog__body {
+    padding: 20px;
+  }
+  
+  .el-dialog__footer {
+    padding: 15px 20px;
+    border-top: 1px solid #ebeef5;
+  }
+}
+
+// 日期选择器弹窗样式 - 确保在最上层
+.el-picker__popper,
+.el-date-picker,
+.el-date-range-picker,
+.draw-date-picker,
+.el-popper,
+.el-overlay,
+.el-picker-panel {
+  z-index: 99999 !important;
+}
+
+// Element Plus 弹窗组件 z-index
+.el-overlay {
+  z-index: 2000 !important;
+}
+
+.el-overlay .el-dialog {
+  z-index: 2001 !important;
+}
+
+.el-picker__popper.el-popper {
+  z-index: 3000 !important;
+}

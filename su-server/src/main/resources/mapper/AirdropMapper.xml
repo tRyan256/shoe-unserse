@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.su.mapper.AirdropMapper">
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        insert into airdrop
+        (title, coupon_id, total_count, remain_count, start_time, end_time, status, create_time, update_time)
+        values
+        (#{title}, #{couponId}, #{totalCount}, #{remainCount}, #{startTime}, #{endTime}, #{status}, #{createTime}, #{updateTime})
+    </insert>
+
+    <update id="update">
+        update airdrop
+        <set>
+            <if test="title != null">
+                title = #{title},
+            </if>
+            <if test="couponId != null">
+                coupon_id = #{couponId},
+            </if>
+            <if test="totalCount != null">
+                total_count = #{totalCount},
+            </if>
+            <if test="remainCount != null">
+                remain_count = #{remainCount},
+            </if>
+            <if test="startTime != null">
+                start_time = #{startTime},
+            </if>
+            <if test="endTime != null">
+                end_time = #{endTime},
+            </if>
+            <if test="status != null">
+                status = #{status},
+            </if>
+            <if test="updateTime != null">
+                update_time = #{updateTime}
+            </if>
+        </set>
+        where id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        delete from airdrop where id = #{id}
+    </delete>
+
+    <select id="pageQuery" resultType="com.su.entity.Airdrop">
+        select * from airdrop
+        <where>
+            <if test="title != null and title != ''">
+                and title like concat('%',#{title},'%')
+            </if>
+            <if test="status != null">
+                and status = #{status}
+            </if>
+        </where>
+        order by update_time desc, id desc
+    </select>
+</mapper>

@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.su.mapper.AirdropRecordMapper">
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        insert into airdrop_record (airdrop_id, user_id, user_coupon_id, create_time)
+        values (#{airdropId}, #{userId}, #{userCouponId}, #{createTime})
+    </insert>
+
+    <select id="exists" resultType="boolean">
+        select count(1) &gt; 0 from airdrop_record where airdrop_id = #{airdropId} and user_id = #{userId}
+    </select>
+
+    <update id="updateUserCouponId">
+        update airdrop_record
+        set user_coupon_id = #{userCouponId}
+        where airdrop_id = #{airdropId}
+          and user_id = #{userId}
+          and user_coupon_id is null
+    </update>
+
+    <select id="countByAirdropId" resultType="int">
+        select count(1)
+        from airdrop_record
+        where airdrop_id = #{airdropId}
+    </select>
+
+    <select id="getByAirdropIdAndUserId" resultType="com.su.entity.AirdropRecord">
+        select * from airdrop_record where airdrop_id = #{airdropId} and user_id = #{userId}
+    </select>
+
+    <select id="listByUserIdWithDetails" resultType="com.su.vo.AirdropRecordVO">
+        select ar.id as id,
+               ar.airdrop_id as airdropId,
+               a.title as airdropTitle,
+               c.name as couponName,
+               c.value as couponValue,
+               ar.create_time as createTime
+        from airdrop_record ar
+                 join airdrop a on a.id = ar.airdrop_id
+                 join user_coupon uc on uc.id = ar.user_coupon_id
+                 join coupon c on c.id = uc.coupon_id
+        where ar.user_id = #{userId}
+        order by ar.create_time desc
+    </select>
+</mapper>

@@ -1,0 +1,218 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.su.mapper.ExperienceCommentMapper">
+    
+    <!-- 插入一级评论 -->
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        insert into experience_comment (post_id, parent_id, user_id, content, target_user_id, target_reply_id, reply_count, like_count, is_author, hidden, create_time)
+        values (#{postId}, 0, #{userId}, #{content}, 0, NULL, #{replyCount}, #{likeCount}, 0, #{hidden}, #{createTime})
+    </insert>
+    
+    <!-- 插入回复 -->
+    <insert id="insertReply" useGeneratedKeys="true" keyProperty="id">
+        insert into experience_comment (post_id, parent_id, user_id, content, target_user_id, target_reply_id, reply_count, like_count, is_author, hidden, create_time)
+        values (#{postId}, #{parentId}, #{userId}, #{content}, #{targetUserId}, #{targetReplyId}, 0, 0, #{isAuthor}, #{hidden}, #{createTime})
+    </insert>
+    
+    <!-- 根据心得ID查询一级评论列表（分页） -->
+    <select id="listByPostId" resultType="com.su.vo.ExperienceCommentVO">
+        select
+            ec.id,
+            ec.post_id as postId,
+            ec.user_id as userId,
+            u.name as userName,
+            u.avatar as userAvatar,
+            ec.content,
+            ec.like_count as likeCount,
+            ec.reply_count as replyCount,
+            ec.hidden,
+            ec.create_time as createTime
+        from experience_comment ec
+        left join user u on ec.user_id = u.id
+        where ec.post_id = #{postId}
+          and ec.parent_id = 0
+          and (ec.hidden = 0 or ec.user_id = #{currentUserId})
+        order by ec.create_time desc
+    </select>
+    
+    <!-- 根据父评论ID查询回复列表 -->
+    <select id="listRepliesByParentId" resultType="com.su.vo.ExperienceReplyVO">
+        select
+            ec.id,
+            ec.parent_id as commentId,
+            ec.user_id as userId,
+            u1.name as userName,
+            u1.avatar as userAvatar,
+            ec.target_user_id as targetUserId,
+            u2.name as targetUserName,
+            ec.target_reply_id as targetReplyId,
+            ec.content,
+            ec.like_count as likeCount,
+            ec.is_author as isAuthor,
+            ec.hidden,
+            ec.create_time as createTime
+        from experience_comment ec
+        left join user u1 on ec.user_id = u1.id
+        left join user u2 on ec.target_user_id = u2.id
+        where ec.parent_id = #{parentId}
+          and (ec.hidden = 0 or ec.user_id = #{currentUserId})
+        order by ec.create_time asc
+    </select>
+    
+    <!-- 根据父评论ID列表批量查询回复 -->
+    <select id="listRepliesByParentIds" resultType="com.su.vo.ExperienceReplyVO">
+        select
+            ec.id,
+            ec.parent_id as commentId,
+            ec.user_id as userId,
+            u1.name as userName,
+            u1.avatar as userAvatar,
+            ec.target_user_id as targetUserId,
+            u2.name as targetUserName,
+            ec.target_reply_id as targetReplyId,
+            ec.content,
+            ec.like_count as likeCount,
+            ec.is_author as isAuthor,
+            ec.hidden,
+            ec.create_time as createTime
+        from experience_comment ec
+        left join user u1 on ec.user_id = u1.id
+        left join user u2 on ec.target_user_id = u2.id
+        where ec.parent_id in
+        <foreach collection="parentIds" item="parentId" open="(" separator="," close=")">
+            #{parentId}
+        </foreach>
+          and (ec.hidden = 0 or ec.user_id = #{currentUserId})
+        order by ec.parent_id, ec.create_time asc
+    </select>
+    
+    <!-- 根据ID列表查询评论 -->
+    <select id="listByIds" resultType="com.su.entity.ExperienceComment">
+        select * from experience_comment
+        where id in
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </select>
+    
+    <!-- 管理员分页查询评论列表（不过滤隐藏状态） -->
+    <select id="pageQueryAdmin" resultType="com.su.vo.ExperienceCommentAdminVO">
+        select
+            ec.id,
+            ec.post_id as postId,
+            ec.user_id as userId,
+            u.name as userName,
+            u.avatar as userAvatar,
+            ec.content,
+            ec.like_count as likeCount,
+            ec.reply_count as replyCount,
+            ec.hidden,
+            ec.create_time as createTime
+        from experience_comment ec
+        left join user u on ec.user_id = u.id
+        <where>
+            ec.parent_id = 0
+            <if test="postId != null">
+                and ec.post_id = #{postId}
+            </if>
+            <if test="hidden != null">
+                and ec.hidden = #{hidden}
+            </if>
+        </where>
+        order by ec.create_time desc
+    </select>
+    
+    <!-- 管理员分页查询评论列表（支持多条件查询） -->
+    <select id="pageQueryForAdmin" resultType="com.su.vo.ExperienceCommentAdminVO">
+        select
+            ec.id,
+            ec.post_id as postId,
+            LEFT(ep.content, 50) as postTitle,
+            ec.user_id as userId,
+            u.name as userName,
+            u.avatar as userAvatar,
+            ec.content,
+            ec.like_count as likeCount,
+            ec.reply_count as replyCount,
+            ec.hidden,
+            ec.create_time as createTime
+        from experience_comment ec
+        left join user u on ec.user_id = u.id
+        left join experience_post ep on ec.post_id = ep.id
+        <where>
+            ec.parent_id = 0
+            <if test="postId != null">
+                and ec.post_id = #{postId}
+            </if>
+            <if test="userName != null and userName != ''">
+                and u.name like concat('%', #{userName}, '%')
+            </if>
+            <if test="contentKeyword != null and contentKeyword != ''">
+                and ec.content like concat('%', #{contentKeyword}, '%')
+            </if>
+            <if test="hidden != null">
+                and ec.hidden = #{hidden}
+            </if>
+        </where>
+        order by ec.create_time desc
+    </select>
+    
+    <!-- 批量更新评论隐藏状态 -->
+    <update id="batchUpdateHiddenStatus">
+        update experience_comment
+        set hidden = #{hidden}
+        where id in
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </update>
+    
+    <!-- 管理员根据评论ID查询回复列表（包含隐藏的） -->
+    <select id="listRepliesByParentIdForAdmin" resultType="com.su.vo.admin.ExperienceReplyAdminVO">
+        select
+            ec.id,
+            ec.parent_id as commentId,
+            ec.user_id as userId,
+            u1.name as userName,
+            u1.avatar as userAvatar,
+            ec.target_user_id as targetUserId,
+            u2.name as targetUserName,
+            ec.target_reply_id as targetReplyId,
+            ec.content,
+            ec.like_count as likeCount,
+            ec.is_author as isAuthor,
+            ec.hidden,
+            ec.create_time as createTime
+        from experience_comment ec
+        left join user u1 on ec.user_id = u1.id
+        left join user u2 on ec.target_user_id = u2.id
+        where ec.parent_id = #{parentId}
+        order by ec.create_time desc
+    </select>
+    
+    <!-- 根据ID删除评论/回复 -->
+    <delete id="deleteById">
+        delete from experience_comment where id = #{id}
+    </delete>
+    
+    <!-- 批量删除评论/回复 -->
+    <delete id="batchDeleteByIds">
+        delete from experience_comment
+        where id in
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+    
+    <!-- 删除评论下的所有回复 -->
+    <delete id="deleteRepliesByParentId">
+        delete from experience_comment where parent_id = #{parentId}
+    </delete>
+    
+    <!-- 更新评论/回复内容 -->
+    <update id="updateContent">
+        update experience_comment set content = #{content} where id = #{id}
+    </update>
+    
+</mapper>

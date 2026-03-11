@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.su.mapper.ShoppingCartMapper">
+    <insert id="insertBatch">
+            insert into shopping_cart (name, user_id, sku_id, bundle_id, shoe_size, number, amount, image, create_time, selected)
+            values
+            <foreach collection="shoppingCartList" item="shoppingCart" separator=",">
+                (#{shoppingCart.name}, #{shoppingCart.userId}, #{shoppingCart.skuId}, #{shoppingCart.bundleId}, #{shoppingCart.shoeSize}, #{shoppingCart.number}, #{shoppingCart.amount}, #{shoppingCart.image}, #{shoppingCart.createTime}, #{shoppingCart.selected})
+            </foreach>
+    </insert>
+
+
+    <select id="list" resultType="com.su.entity.ShoppingCart">
+        select *
+        from shopping_cart
+        <where>
+            <if  test="userId != null">
+                and user_id = #{userId}
+            </if>
+            <if  test="spuId != null">
+                and spu_id = #{spuId}
+            </if>
+            <if  test="skuId != null">
+                and sku_id = #{skuId}
+            </if>
+            <if  test="bundleId != null">
+                and bundle_id = #{bundleId}
+            </if>
+            <if  test="shoeSize != null">
+                and shoe_size = #{shoeSize}
+            </if>
+            <if  test="selected != null">
+                and selected = #{selected}
+            </if>
+        </where>
+    </select>
+</mapper>

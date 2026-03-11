@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.su.mapper.DrawRecordMapper">
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        insert into draw_record (draw_id, user_id, address_book_id, shoe_size, sku_id, status, order_no, create_time)
+        values (#{drawId}, #{userId}, #{addressBookId}, #{shoeSize}, #{skuId}, #{status}, #{orderNo}, #{createTime})
+    </insert>
+
+    <insert id="insertIgnore">
+        insert ignore into draw_record (id, draw_id, user_id, address_book_id, shoe_size, sku_id, status, order_no, create_time)
+        values (#{id}, #{drawId}, #{userId}, #{addressBookId}, #{shoeSize}, #{skuId}, #{status}, #{orderNo}, #{createTime})
+    </insert>
+
+    <insert id="insertBatchIgnore">
+        insert ignore into draw_record (id, draw_id, user_id, address_book_id, shoe_size, sku_id, status, order_no, create_time)
+        values
+        <foreach collection="records" item="r" separator=",">
+            (#{r.id}, #{r.drawId}, #{r.userId}, #{r.addressBookId}, #{r.shoeSize}, #{r.skuId}, #{r.status}, #{r.orderNo}, #{r.createTime})
+        </foreach>
+    </insert>
+
+    <select id="maxId" resultType="java.lang.Long">
+        select max(id) from draw_record
+    </select>
+
+    <select id="countByDrawId" resultType="int">
+        select count(1) from draw_record where draw_id = #{drawId}
+    </select>
+
+    <select id="listByDrawId" resultType="com.su.entity.DrawRecord">
+        select * from draw_record where draw_id = #{drawId} order by id desc
+    </select>
+
+    <select id="listPendingByDrawId" resultType="com.su.entity.DrawRecord">
+        select * from draw_record where draw_id = #{drawId} and status = 0 order by id desc
+    </select>
+
+    <select id="listUserIdsByDrawId" resultType="java.lang.Long">
+        select user_id from draw_record where draw_id = #{drawId}
+    </select>
+
+    <select id="listUserIdRecordsByDrawIdPaged" resultType="com.su.entity.DrawRecord">
+        select id, user_id
+        from draw_record
+        where draw_id = #{drawId}
+          and id &gt; #{lastId}
+        order by id asc
+        limit #{limit}
+    </select>
+
+    <select id="listByUserId" resultType="com.su.entity.DrawRecord">
+        select * from draw_record where user_id = #{userId} order by id desc
+    </select>
+
+    <select id="getByDrawIdAndUserId" resultType="com.su.entity.DrawRecord">
+        select * from draw_record
+        where draw_id = #{drawId}
+          and user_id = #{userId}
+        order by id desc
+        limit 1
+    </select>
+
+    <select id="pickWinners" resultType="com.su.entity.DrawRecord">
+        select * from draw_record
+        where draw_id = #{drawId}
+          and status = 0
+        order by rand()
+        limit #{winnerCount}
+    </select>
+
+    <update id="updateStatusAndOrderNo">
+        update draw_record
+        <set>
+            <if test="status != null">
+                status = #{status},
+            </if>
+            <if test="orderNo != null">
+                order_no = #{orderNo},
+            </if>
+        </set>
+        where id = #{id}
+        <if test="orderNo != null">
+            and (order_no is null or order_no = '')
+        </if>
+    </update>
+
+    <update id="updateOrderNoAndShoeSize">
+        update draw_record
+        set order_no = #{orderNo},
+            shoe_size = #{shoeSize}
+        where id = #{id}
+          and (order_no is null or order_no = '')
+    </update>
+
+    <update id="markLosers">
+        update draw_record
+        set status = 2
+        where draw_id = #{drawId}
+          and status = 0
+        <if test="winnerIds != null and winnerIds.size() &gt; 0">
+            and id not in
+            <foreach collection="winnerIds" item="id" open="(" close=")" separator=",">
+                #{id}
+            </foreach>
+        </if>
+    </update>
+
+    <select id="listWinners" resultType="com.su.vo.DrawWinnerVO">
+        select dr.id          as recordId,
+               dr.user_id     as userId,
+               u.name         as userName,
+               u.phone        as userPhone,
+               dr.shoe_size   as shoeSize,
+               dr.order_no    as orderNo,
+               dr.create_time as joinTime,
+               d.title        as prizeName,
+               d.draw_time    as winTime,
+               dr.status      as status
+        from draw_record dr
+                 join user u on u.id = dr.user_id
+                 join draw d on d.id = dr.draw_id
+        where dr.draw_id = #{drawId}
+          and dr.status = 1
+        order by dr.id desc
+    </select>
+
+    <select id="listWinnersPublic" resultType="com.su.vo.DrawWinnerPublicVO">
+        select dr.user_id     as userId,
+               u.name         as userName,
+               u.avatar       as userAvatar,
+               dr.shoe_size   as shoeSize,
+               dr.create_time as joinTime
+        from draw_record dr
+                 join user u on u.id = dr.user_id
+        where dr.draw_id = #{drawId}
+          and dr.status = 1
+        order by dr.id desc
+    </select>
+
+    <select id="listByUserIdWithDetails" resultType="com.su.vo.DrawRecordVO">
+        select dr.id as id,
+               dr.draw_id as drawId,
+               d.title as drawTitle,
+               d.target_type as targetType,
+               dr.shoe_size as shoeSize,
+               dr.status as status,
+               dr.order_no as orderNo,
+               dr.create_time as createTime
+        from draw_record dr
+                 join draw d on d.id = dr.draw_id
+        where dr.user_id = #{userId}
+        order by dr.create_time desc
+    </select>
+
+    <update id="clearOrderNoByOrderNo">
+        update draw_record
+        set order_no = null
+        where order_no = #{orderNo}
+    </update>
+
+    <select id="getByOrderNo" resultType="com.su.entity.DrawRecord">
+        select id, draw_id, user_id, status, order_no
+        from draw_record
+        where order_no = #{orderNo}
+        limit 1
+    </select>
+</mapper>

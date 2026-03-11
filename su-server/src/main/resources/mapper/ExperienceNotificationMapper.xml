@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.su.mapper.ExperienceNotificationMapper">
+    
+    <!-- 插入通知 -->
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        insert into experience_notification (user_id, type, source_user_id, post_id, comment_id, content, is_read, create_time)
+        values (#{userId}, #{type}, #{sourceUserId}, #{postId}, #{commentId}, #{content}, #{isRead}, #{createTime})
+    </insert>
+    
+    <!-- 根据用户ID查询通知列表（分页） -->
+    <select id="listByUserId" resultType="com.su.entity.ExperienceNotification">
+        select
+            en.id,
+            en.user_id as userId,
+            en.type,
+            en.source_user_id as sourceUserId,
+            en.post_id as postId,
+            en.comment_id as commentId,
+            en.content,
+            en.is_read as isRead,
+            en.create_time as createTime
+        from experience_notification en
+        where en.user_id = #{userId}
+        order by en.create_time desc
+    </select>
+    
+    <!-- 根据用户ID查询通知VO列表（分页，带类型过滤，JOIN user, post, comment） -->
+    <select id="listNotificationVOsByUserId" resultType="com.su.vo.ExperienceNotificationVO">
+        select
+            en.id,
+            en.user_id as userId,
+            en.type,
+            en.source_user_id as sourceUserId,
+            case when en.type = 6 then '系统通知' else u.name end as sourceUserName,
+            case when en.type = 6 then null else u.avatar end as sourceUserAvatar,
+            en.post_id as postId,
+            en.comment_id as commentId,
+            en.content,
+            en.is_read as isRead,
+            en.create_time as createTime
+        from experience_notification en
+        left join user u on en.source_user_id = u.id
+        left join experience_post ep on en.post_id = ep.id
+        left join experience_comment ec on en.comment_id = ec.id
+        where en.user_id = #{userId}
+        <if test="type != null">
+            and en.type = #{type}
+        </if>
+        order by en.create_time desc
+    </select>
+    
+    <!-- 批量标记通知为已读 -->
+    <update id="markAsReadBatch">
+        update experience_notification
+        set is_read = 1
+        where id in
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </update>
+    
+</mapper>

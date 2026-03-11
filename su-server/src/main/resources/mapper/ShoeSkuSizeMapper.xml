@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.su.mapper.ShoeSkuSizeMapper">
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        insert into shoe_sku_size (sku_id, size, stock)
+        values (#{skuId}, #{size}, #{stock})
+    </insert>
+
+    <insert id="insertBatch">
+        insert into shoe_sku_size (sku_id, size, stock)
+        values
+        <foreach item="item" collection="list" separator=",">
+            (#{item.skuId}, #{item.size}, #{item.stock})
+        </foreach>
+    </insert>
+
+    <delete id="deleteBySkuId">
+        delete from shoe_sku_size where sku_id = #{skuId}
+    </delete>
+
+    <delete id="deleteBySkuIds">
+        delete from shoe_sku_size where sku_id in
+        <foreach item="id" collection="list" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <update id="decrementStock">
+        update shoe_sku_size set stock = stock - #{quantity}
+        where sku_id = #{skuId} and size = #{size} and stock >= #{quantity}
+    </update>
+
+    <update id="incrementStock">
+        update shoe_sku_size set stock = stock + #{quantity}
+        where sku_id = #{skuId} and size = #{size}
+    </update>
+
+    <select id="pageStock" resultType="com.su.vo.WarehouseStockVO">
+        select 
+            ss.id,
+            ss.sku_id as skuId,
+            ss.size,
+            ss.stock,
+            sk.color_name as colorName,
+            sp.name as spuName,
+            sp.brand
+        from shoe_sku_size ss
+        inner join shoe_sku sk on ss.sku_id = sk.id
+        inner join shoe_spu sp on sk.spu_id = sp.id
+        <where>
+            <if test="spuName != null and spuName != ''">
+                and sp.name like concat('%', #{spuName}, '%')
+            </if>
+            <if test="brand != null and brand != ''">
+                and sp.brand = #{brand}
+            </if>
+            <if test="size != null and size != ''">
+                and ss.size = #{size}
+            </if>
+        </where>
+        order by sp.id desc, sk.id desc, ss.size asc
+    </select>
+</mapper>

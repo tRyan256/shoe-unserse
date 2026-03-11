@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.su.mapper.LogisticsMapper">
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        insert into logistics
+        (order_no, express_company, express_no, status, current_location,
+         receiver_name, receiver_phone, receiver_address,
+         sender_name, sender_phone, sender_address,
+         estimated_time, actual_time, create_time, update_time)
+        values
+        (#{orderNo}, #{expressCompany}, #{expressNo}, #{status}, #{currentLocation},
+         #{receiverName}, #{receiverPhone}, #{receiverAddress},
+         #{senderName}, #{senderPhone}, #{senderAddress},
+         #{estimatedTime}, #{actualTime}, #{createTime}, #{updateTime})
+    </insert>
+
+    <select id="getByOrderNo" resultType="com.su.entity.Logistics">
+        select * from logistics where order_no = #{orderNo}
+    </select>
+
+    <update id="update">
+        update logistics
+        <set>
+            <if test="status != null">
+                status = #{status},
+            </if>
+            <if test="currentLocation != null">
+                current_location = #{currentLocation},
+            </if>
+            <if test="estimatedTime != null">
+                estimated_time = #{estimatedTime},
+            </if>
+            <if test="actualTime != null">
+                actual_time = #{actualTime},
+            </if>
+            <if test="updateTime != null">
+                update_time = #{updateTime}
+            </if>
+        </set>
+        where id = #{id}
+    </update>
+
+    <select id="listNeedSimulate" resultType="com.su.entity.Logistics">
+        select * from logistics
+        where status in (3,4,5)
+          and update_time &lt;= #{beforeTime}
+        order by update_time asc, id asc
+        limit #{limit}
+    </select>
+</mapper>

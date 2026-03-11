@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.su.mapper.ExperienceLikeMapper">
+    
+    <insert id="insertPostLike" useGeneratedKeys="true" keyProperty="id">
+        insert into experience_like (post_id, user_id, create_time)
+        values (#{postId}, #{userId}, #{createTime})
+    </insert>
+    
+    <insert id="insertCommentLike" useGeneratedKeys="true" keyProperty="id">
+        insert into experience_like (comment_id, user_id, create_time)
+        values (#{commentId}, #{userId}, #{createTime})
+    </insert>
+    
+    <select id="listPostLikeUsers" resultType="com.su.vo.UserProfileVO">
+        select
+            u.id as userId,
+            u.name as userName,
+            u.avatar as userAvatar,
+            u.follower_count as followerCount,
+            u.following_count as followingCount,
+            u.liked_count as likedCount,
+            u.post_count as postCount
+        from experience_like el
+        left join user u on el.user_id = u.id
+        where el.post_id = #{postId}
+        order by el.create_time desc
+    </select>
+    
+</mapper>

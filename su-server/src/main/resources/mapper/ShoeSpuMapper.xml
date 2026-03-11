@@ -1,0 +1,243 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.su.mapper.ShoeSpuMapper">
+    <resultMap id="spuVOResultMap" type="com.su.vo.ShoeSpuVO">
+        <id column="id" property="id"/>
+        <result column="name" property="name"/>
+        <result column="brand" property="brand"/>
+        <result column="model" property="model"/>
+        <result column="description" property="description"/>
+        <result column="is_limited" property="isLimited"/>
+        <result column="release_date" property="releaseDate"/>
+        <result column="status" property="status"/>
+        <result column="min_price" property="minPrice"/>
+        <result column="max_price" property="maxPrice"/>
+        <result column="color_count" property="colorCount"/>
+        <result column="total_stock" property="totalStock"/>
+        <result column="sales_count" property="salesCount"/>
+        <result column="color_names" property="colorNames" typeHandler="com.su.handler.StringListTypeHandler"/>
+        <result column="category_names" property="categoryNames" typeHandler="com.su.handler.StringListTypeHandler"/>
+        <result column="default_image" property="defaultImage"/>
+    </resultMap>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        insert into shoe_spu (name, brand, model, description, is_limited, release_date, status, create_time, update_time, create_user, update_user)
+        values (#{name}, #{brand}, #{model}, #{description}, #{isLimited}, #{releaseDate}, #{status}, #{createTime}, #{updateTime}, #{createUser}, #{updateUser})
+    </insert>
+
+    <update id="update">
+        update shoe_spu
+        <set>
+            <if test="name != null">
+                name = #{name},
+            </if>
+            <if test="brand != null">
+                brand = #{brand},
+            </if>
+            <if test="model != null">
+                model = #{model},
+            </if>
+            <if test="description != null">
+                description = #{description},
+            </if>
+            <if test="isLimited != null">
+                is_limited = #{isLimited},
+            </if>
+            <if test="releaseDate != null">
+                release_date = #{releaseDate},
+            </if>
+            <if test="status != null">
+                status = #{status},
+            </if>
+            <if test="updateTime != null">
+                update_time = #{updateTime},
+            </if>
+            <if test="updateUser != null">
+                update_user = #{updateUser}
+            </if>
+        </set>
+        where id = #{id}
+    </update>
+
+    <delete id="delete">
+        delete from shoe_spu where id in
+        <foreach item="id" collection="list" separator="," open="(" close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <select id="pageQuery" resultType="com.su.vo.ShoeSpuVO">
+        SELECT 
+            spu.id,
+            spu.name,
+            spu.brand,
+            spu.model,
+            spu.description,
+            spu.is_limited,
+            spu.release_date,
+            spu.status,
+            spu.create_time,
+            MIN(sku.price) as min_price,
+            MAX(sku.price) as max_price,
+            COUNT(DISTINCT sku.id) as color_count,
+            (SELECT COALESCE(SUM(ss.stock), 0) FROM shoe_sku_size ss INNER JOIN shoe_sku s ON ss.sku_id = s.id WHERE s.spu_id = spu.id) as total_stock,
+            (SELECT COALESCE(SUM(od.number), 0) FROM order_detail od INNER JOIN orders o ON od.order_id = o.id WHERE od.spu_id = spu.id AND o.status != 7) as sales_count,
+            GROUP_CONCAT(DISTINCT sku.color_name) as color_names,
+            GROUP_CONCAT(DISTINCT c.name) as category_names,
+            (SELECT sku2.image FROM shoe_sku sku2 WHERE sku2.spu_id = spu.id ORDER BY sku2.is_default DESC, sku2.id ASC LIMIT 1) as default_image
+        FROM shoe_spu spu
+        LEFT JOIN shoe_sku sku ON spu.id = sku.spu_id
+        LEFT JOIN shoe_spu_category spuc ON spu.id = spuc.spu_id
+        LEFT JOIN category c ON spuc.category_id = c.id
+        <where>
+            <if test="name != null and name != ''">
+                AND spu.name LIKE CONCAT('%', #{name}, '%')
+            </if>
+            <if test="brand != null and brand != ''">
+                AND spu.brand = #{brand}
+            </if>
+            <if test="status != null">
+                AND spu.status = #{status}
+            </if>
+            <if test="isLimited != null">
+                AND spu.is_limited = #{isLimited}
+            </if>
+            <if test="categoryId != null">
+                AND spuc.category_id = #{categoryId}
+            </if>
+            <if test="categoryIds != null and categoryIds.size() > 0">
+                AND spuc.category_id IN
+                <foreach item="id" collection="categoryIds" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
+            </if>
+        </where>
+        GROUP BY spu.id
+        ORDER BY spu.release_date DESC, spu.create_time DESC
+    </select>
+
+    <select id="getVOById" resultType="com.su.vo.ShoeSpuVO">
+        SELECT 
+            spu.id,
+            spu.name,
+            spu.brand,
+            spu.model,
+            spu.description,
+            spu.is_limited,
+            spu.release_date,
+            spu.status,
+            MIN(sku.price) as min_price,
+            MAX(sku.price) as max_price,
+            COUNT(sku.id) as color_count,
+            (SELECT COALESCE(SUM(ss.stock), 0) FROM shoe_sku_size ss INNER JOIN shoe_sku s ON ss.sku_id = s.id WHERE s.spu_id = spu.id) as total_stock,
+            (SELECT COALESCE(SUM(od.number), 0) FROM order_detail od INNER JOIN orders o ON od.order_id = o.id WHERE od.spu_id = spu.id AND o.status != 7) as sales_count,
+            GROUP_CONCAT(DISTINCT sku.color_name) as color_names,
+            GROUP_CONCAT(DISTINCT c.name) as category_names,
+            (SELECT sku2.image FROM shoe_sku sku2 WHERE sku2.spu_id = spu.id ORDER BY sku2.is_default DESC, sku2.id ASC LIMIT 1) as default_image
+        FROM shoe_spu spu
+        LEFT JOIN shoe_sku sku ON spu.id = sku.spu_id
+        LEFT JOIN shoe_spu_category spuc ON spu.id = spuc.spu_id
+        LEFT JOIN category c ON spuc.category_id = c.id
+        WHERE spu.id = #{id}
+        GROUP BY spu.id
+    </select>
+
+    <select id="listByCategoryIds" resultType="com.su.vo.ShoeSpuVO">
+        SELECT 
+            spu.id,
+            spu.name,
+            spu.brand,
+            spu.model,
+            spu.description,
+            spu.is_limited,
+            spu.release_date,
+            spu.status,
+            MIN(sku.price) as min_price,
+            MAX(sku.price) as max_price,
+            COUNT(DISTINCT sku.id) as color_count,
+            (SELECT COALESCE(SUM(ss.stock), 0) FROM shoe_sku_size ss INNER JOIN shoe_sku s ON ss.sku_id = s.id WHERE s.spu_id = spu.id) as total_stock,
+            (SELECT COALESCE(SUM(od.number), 0) FROM order_detail od INNER JOIN orders o ON od.order_id = o.id WHERE od.spu_id = spu.id AND o.status != 7) as sales_count,
+            GROUP_CONCAT(DISTINCT sku.color_name) as color_names,
+            GROUP_CONCAT(DISTINCT c.name) as category_names,
+            (SELECT sku2.image FROM shoe_sku sku2 WHERE sku2.spu_id = spu.id ORDER BY sku2.is_default DESC, sku2.id ASC LIMIT 1) as default_image
+        FROM shoe_spu spu
+        INNER JOIN shoe_spu_category spuc ON spu.id = spuc.spu_id
+        LEFT JOIN shoe_sku sku ON spu.id = sku.spu_id AND sku.status = 1
+        LEFT JOIN category c ON spuc.category_id = c.id
+        WHERE spu.status = 1
+        AND spuc.category_id IN
+        <foreach item="id" collection="list" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+        GROUP BY spu.id
+        ORDER BY spu.release_date DESC, spu.create_time DESC
+    </select>
+
+    <select id="listAll" resultType="com.su.vo.ShoeSpuVO">
+        SELECT 
+            spu.id,
+            spu.name,
+            spu.brand,
+            spu.model,
+            spu.description,
+            spu.is_limited,
+            spu.release_date,
+            spu.status,
+            MIN(sku.price) as min_price,
+            MAX(sku.price) as max_price,
+            COUNT(DISTINCT sku.id) as color_count,
+            (SELECT COALESCE(SUM(ss.stock), 0) FROM shoe_sku_size ss INNER JOIN shoe_sku s ON ss.sku_id = s.id WHERE s.spu_id = spu.id) as total_stock,
+            (SELECT COALESCE(SUM(od.number), 0) FROM order_detail od INNER JOIN orders o ON od.order_id = o.id WHERE od.spu_id = spu.id AND o.status != 7) as sales_count,
+            GROUP_CONCAT(DISTINCT sku.color_name) as color_names,
+            GROUP_CONCAT(DISTINCT c.name) as category_names,
+            (SELECT sku2.image FROM shoe_sku sku2 WHERE sku2.spu_id = spu.id ORDER BY sku2.is_default DESC, sku2.id ASC LIMIT 1) as default_image
+        FROM shoe_spu spu
+        LEFT JOIN shoe_sku sku ON spu.id = sku.spu_id AND sku.status = 1
+        LEFT JOIN shoe_spu_category spuc ON spu.id = spuc.spu_id
+        LEFT JOIN category c ON spuc.category_id = c.id
+        WHERE spu.status = 1
+        GROUP BY spu.id
+        ORDER BY spu.release_date DESC, spu.create_time DESC
+    </select>
+
+    <select id="countByMap" resultType="java.lang.Integer">
+        select count(id) from shoe_spu
+        <where>
+            <if test="status != null">
+                and status = #{status}
+            </if>
+        </where>
+    </select>
+
+    <select id="searchByKeyword" resultType="com.su.vo.ShoeSpuVO">
+        SELECT 
+            spu.id,
+            spu.name,
+            spu.brand,
+            spu.model,
+            spu.description,
+            spu.is_limited,
+            spu.release_date,
+            spu.status,
+            MIN(sku.price) as min_price,
+            MAX(sku.price) as max_price,
+            COUNT(DISTINCT sku.id) as color_count,
+            (SELECT COALESCE(SUM(ss.stock), 0) FROM shoe_sku_size ss INNER JOIN shoe_sku s ON ss.sku_id = s.id WHERE s.spu_id = spu.id) as total_stock,
+            (SELECT COALESCE(SUM(od.number), 0) FROM order_detail od INNER JOIN orders o ON od.order_id = o.id WHERE od.spu_id = spu.id AND o.status != 7) as sales_count,
+            GROUP_CONCAT(DISTINCT sku.color_name) as color_names,
+            GROUP_CONCAT(DISTINCT c.name) as category_names,
+            (SELECT sku2.image FROM shoe_sku sku2 WHERE sku2.spu_id = spu.id ORDER BY sku2.is_default DESC, sku2.id ASC LIMIT 1) as default_image
+        FROM shoe_spu spu
+        LEFT JOIN shoe_sku sku ON spu.id = sku.spu_id AND sku.status = 1
+        LEFT JOIN shoe_spu_category spuc ON spu.id = spuc.spu_id
+        LEFT JOIN category c ON spuc.category_id = c.id
+        WHERE spu.status = 1
+        AND (spu.name LIKE CONCAT('%', #{keyword}, '%') 
+             OR spu.brand LIKE CONCAT('%', #{keyword}, '%')
+             OR spu.model LIKE CONCAT('%', #{keyword}, '%')
+             OR spu.description LIKE CONCAT('%', #{keyword}, '%'))
+        GROUP BY spu.id
+        ORDER BY spu.release_date DESC, spu.create_time DESC
+    </select>
+</mapper>

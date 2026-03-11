@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.su.mapper.CouponMapper">
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        insert into coupon
+        (name, type, value, min_amount, start_time, end_time, status, create_time, update_time)
+        values
+        (#{name}, #{type}, #{value}, #{minAmount}, #{startTime}, #{endTime}, #{status}, #{createTime}, #{updateTime})
+    </insert>
+
+    <update id="update">
+        update coupon
+        <set>
+            <if test="name != null">
+                name = #{name},
+            </if>
+            <if test="type != null">
+                type = #{type},
+            </if>
+            <if test="value != null">
+                value = #{value},
+            </if>
+            <if test="minAmount != null">
+                min_amount = #{minAmount},
+            </if>
+            <if test="startTime != null">
+                start_time = #{startTime},
+            </if>
+            <if test="endTime != null">
+                end_time = #{endTime},
+            </if>
+            <if test="status != null">
+                status = #{status},
+            </if>
+            <if test="updateTime != null">
+                update_time = #{updateTime}
+            </if>
+        </set>
+        where id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        delete from coupon where id = #{id}
+    </delete>
+
+    <select id="pageQuery" resultType="com.su.entity.Coupon">
+        select * from coupon
+        <where>
+            <if test="name != null and name != ''">
+                and name like concat('%',#{name},'%')
+            </if>
+            <if test="type != null">
+                and type = #{type}
+            </if>
+            <if test="status != null">
+                and status = #{status}
+            </if>
+        </where>
+        order by update_time desc, id desc
+    </select>
+
+    <select id="listEnabled" resultType="com.su.entity.Coupon">
+        select * from coupon where status = 1 order by id desc
+    </select>
+</mapper>
+

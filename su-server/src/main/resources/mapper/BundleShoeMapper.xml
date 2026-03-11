@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.su.mapper.BundleShoeMapper">
+    <insert id="insertBatch">
+        insert into bundle_shoe (bundle_id, sku_id, name, price, copies)
+        values
+        <foreach collection="bundleShoes" item="bundleShoe" separator=",">
+            (#{bundleShoe.bundleId}, #{bundleShoe.skuId}, #{bundleShoe.name}, #{bundleShoe.price}, #{bundleShoe.copies})
+        </foreach>
+    </insert>
+
+    <delete id="deleteByBundleId">
+        delete from bundle_shoe where bundle_id in
+        <foreach item="bundleId" collection="bundleIds" separator="," open="(" close=")">
+            #{bundleId}
+        </foreach>
+    </delete>
+
+    <select id="getByBundleIds" resultType="com.su.entity.BundleShoe">
+        select * from bundle_shoe where bundle_id in
+        <foreach item="bundleId" collection="bundleIds" separator="," open="(" close=")">
+            #{bundleId}
+        </foreach>
+    </select>
+
+    <select id="getBundleIdsBySkuIds" resultType="java.lang.Long">
+        select distinct bundle_id from bundle_shoe where sku_id in
+        <foreach item="skuId" collection="skuIds" separator="," open="(" close=")">
+            #{skuId}
+        </foreach>
+    </select>
+
+    <select id="countBundlesByCategoryId" resultType="java.lang.Integer">
+        select count(distinct bs.bundle_id)
+        from bundle_shoe bs
+        inner join shoe_sku sk on bs.sku_id = sk.id
+        inner join shoe_spu_category sc on sk.spu_id = sc.spu_id
+        where sc.category_id = #{categoryId}
+    </select>
+</mapper>

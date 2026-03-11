@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.su.mapper.ReportMapper">
+
+    <!-- 鏍规嵁鏃ユ湡鍒楄〃鏌ヨ姣忔棩钀ヤ笟棰?-->
+    <select id="getTurnoverByDates" resultType="java.math.BigDecimal">
+        <foreach collection="dateList" item="date" separator=" UNION ALL ">
+            SELECT
+            SUM(IF(DATE(checkout_time) = #{date}, amount, 0)) AS turnover
+            FROM orders
+            WHERE status = 6
+        </foreach>
+    </select>
+    <select id="getNewUserByDates" resultType="java.lang.Integer">
+       <foreach collection="dateList" separator=" UNION ALL " item="date">
+           select
+               count(if(DATE (user.create_time)=#{date},1,null))
+           from user
+       </foreach>
+    </select>
+    <select id="getTotalUserByDates" resultType="java.lang.Integer">
+        <foreach collection="dateList" separator=" UNION ALL " item="date">
+            select
+            count(1)
+            from user
+        </foreach>
+    </select>
+    <select id="getOrderCountByDates" resultType="java.lang.Integer">
+            <foreach collection="dateList" separator=" UNION ALL " item="date">
+                select
+                count(1)
+                from orders
+                where DATE(order_time) = #{date}
+            </foreach>
+    </select>
+    <select id="getValidOrderCountByDates" resultType="java.lang.Integer">
+        <foreach collection="dateList" separator=" UNION ALL " item="date">
+            select
+            count(1)
+            from orders
+            where DATE(order_time) = #{date}
+            and status = 6
+        </foreach>
+    </select>
+    <select id="getSalesTop10" resultType="com.su.dto.GoodsSalesDTO">
+        select od.name,sum(od.number) as number
+        from order_detail od join orders o on od.order_id = o.id
+        where DATE (o.checkout_time) &gt;= #{begin}
+          and DATE (o.checkout_time) &lt;= #{end}
+        group by  od.name
+        order by number desc
+    </select>
+
+    <select id="getTotalTurnover" resultType="java.lang.Double">
+        select sum(amount) from orders where status = 6
+    </select>
+
+    <select id="getTotalValidOrderCount" resultType="java.lang.Integer">
+        select count(1) from orders where status = 6
+    </select>
+
+</mapper>

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.su.mapper.OrderDetailMapper">
+
+
+    <insert id="insertBatch">
+            insert into order_detail (name,image,order_id, spu_id, sku_id, bundle_id, shoe_size, number, amount) values
+            <foreach collection="orderDetails" item="orderDetail" separator=",">
+                (#{orderDetail.name},#{orderDetail.image},#{orderDetail.orderId},#{orderDetail.spuId},#{orderDetail.skuId},#{orderDetail.bundleId},#{orderDetail.shoeSize},#{orderDetail.number},#{orderDetail.amount})
+            </foreach>
+    </insert>
+    <select id="getByOrderId" resultType="com.su.entity.OrderDetail">
+        select * from order_detail where order_id in
+            <foreach collection="ordersId" separator="," open="(" close=")" item="orderId" index="">
+                #{orderId}
+            </foreach>
+    </select>
+</mapper>
+

@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.su.mapper.CommentMapper">
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        insert into comment (spu_id, user_id, content, images, rating, status, create_time)
+        values (#{spuId}, #{userId}, #{content}, #{images}, #{rating}, #{status}, #{createTime})
+    </insert>
+
+    <delete id="deleteById">
+        delete from comment where id = #{id}
+    </delete>
+
+    <update id="updateStatus">
+        update comment set status = #{status} where id = #{id}
+    </update>
+
+    <select id="pageQuery" resultType="com.su.entity.Comment">
+        select * from comment
+        <where>
+            <if test="spuId != null">
+                and spu_id = #{spuId}
+            </if>
+            <if test="userId != null">
+                and user_id = #{userId}
+            </if>
+            <if test="rating != null">
+                and rating = #{rating}
+            </if>
+            <if test="status != null">
+                and status = #{status}
+            </if>
+        </where>
+        order by create_time desc, id desc
+    </select>
+
+    <select id="pageQueryAdmin" resultType="com.su.vo.CommentAdminVO">
+        select
+            c.id,
+            c.spu_id,
+            s.name as spu_name,
+            sk.image as spu_image,
+            c.user_id,
+            u.name as user_name,
+            u.phone as user_phone,
+            u.avatar as user_avatar,
+            c.content,
+            c.images,
+            c.rating,
+            c.status,
+            c.create_time
+        from comment c
+        left join shoe_spu s on c.spu_id = s.id
+        left join shoe_sku sk on sk.spu_id = s.id and sk.is_default = 1
+        left join user u on c.user_id = u.id
+        <where>
+            <if test="spuId != null">
+                and c.spu_id = #{spuId}
+            </if>
+            <if test="userId != null">
+                and c.user_id = #{userId}
+            </if>
+            <if test="spuName != null and spuName != ''">
+                and s.name like concat('%',#{spuName},'%')
+            </if>
+            <if test="userName != null and userName != ''">
+                and u.name like concat('%',#{userName},'%')
+            </if>
+            <if test="rating != null">
+                and c.rating = #{rating}
+            </if>
+            <if test="status != null">
+                and c.status = #{status}
+            </if>
+        </where>
+        order by c.create_time desc, c.id desc
+    </select>
+
+    <select id="listVOBySpuId" resultType="com.su.vo.CommentVO">
+        select
+            c.id,
+            c.spu_id as spuId,
+            c.user_id as userId,
+            u.name as userName,
+            u.avatar as userAvatar,
+            c.content,
+            c.images,
+            c.rating,
+            c.create_time as createTime
+        from comment c
+        left join user u on c.user_id = u.id
+        where c.spu_id = #{spuId} and c.status = 1
+        order by c.create_time desc, c.id desc
+    </select>
+
+    <select id="listMyComments" resultType="com.su.vo.MyCommentVO">
+        select
+            c.id,
+            c.spu_id as spuId,
+            s.name as spuName,
+            sk.image as spuImage,
+            c.content,
+            c.images,
+            c.rating,
+            c.create_time as createTime
+        from comment c
+        left join shoe_spu s on c.spu_id = s.id
+        left join shoe_sku sk on sk.spu_id = s.id and sk.is_default = 1
+        where c.user_id = #{userId} and c.status = 1
+        order by c.create_time desc, c.id desc
+    </select>
+</mapper>

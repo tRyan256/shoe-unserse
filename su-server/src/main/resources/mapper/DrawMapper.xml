@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.su.mapper.DrawMapper">
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        insert into draw
+        (sku_id, bundle_id, title, target_type, total_stock, max_participants, winner_count, price,
+         start_time, end_time, draw_time, status, description, create_time, update_time)
+        values
+        (#{skuId}, #{bundleId}, #{title}, #{targetType}, #{totalStock}, #{maxParticipants}, #{winnerCount}, #{price},
+         #{startTime}, #{endTime}, #{drawTime}, #{status}, #{description}, #{createTime}, #{updateTime})
+    </insert>
+
+    <update id="update">
+        update draw
+        <set>
+            <if test="skuId != null">
+                sku_id = #{skuId},
+            </if>
+            <if test="bundleId != null">
+                bundle_id = #{bundleId},
+            </if>
+            <if test="title != null">
+                title = #{title},
+            </if>
+            <if test="targetType != null">
+                target_type = #{targetType},
+            </if>
+            <if test="totalStock != null">
+                total_stock = #{totalStock},
+            </if>
+            <if test="maxParticipants != null">
+                max_participants = #{maxParticipants},
+            </if>
+            <if test="winnerCount != null">
+                winner_count = #{winnerCount},
+            </if>
+            <if test="price != null">
+                price = #{price},
+            </if>
+            <if test="startTime != null">
+                start_time = #{startTime},
+            </if>
+            <if test="endTime != null">
+                end_time = #{endTime},
+            </if>
+            <if test="drawTime != null">
+                draw_time = #{drawTime},
+            </if>
+            <if test="status != null">
+                status = #{status},
+            </if>
+            <if test="description != null">
+                description = #{description},
+            </if>
+            <if test="updateTime != null">
+                update_time = #{updateTime}
+            </if>
+        </set>
+        where id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        delete from draw where id = #{id}
+    </delete>
+
+    <select id="pageQuery" resultType="com.su.vo.DrawAdminPageVO">
+        select
+            d.id,
+            d.sku_id as skuId,
+            d.bundle_id as bundleId,
+            d.title,
+            d.target_type as targetType,
+            d.total_stock as totalStock,
+            d.max_participants as maxParticipants,
+            d.winner_count as winnerCount,
+            d.price,
+            d.start_time as startTime,
+            d.end_time as endTime,
+            d.draw_time as drawTime,
+            d.status,
+            d.description,
+            case
+                when d.target_type = 1 then spu.name
+                when d.target_type = 2 then b.name
+                else null
+            end as targetName,
+            case
+                when d.target_type = 1 then sk.color_name
+                else null
+            end as skuColorName,
+            count(dr.id) as participantCount
+        from draw d
+        left join shoe_sku sk on sk.id = d.sku_id
+        left join shoe_spu spu on spu.id = sk.spu_id
+        left join bundle b on b.id = d.bundle_id
+        left join draw_record dr on dr.draw_id = d.id
+        <where>
+            <if test="title != null and title != ''">
+                and d.title like concat('%',#{title},'%')
+            </if>
+            <if test="status != null">
+                and d.status = #{status}
+            </if>
+            <if test="targetType != null">
+                and d.target_type = #{targetType}
+            </if>
+        </where>
+        group by
+            d.id,
+            d.sku_id,
+            d.bundle_id,
+            d.title,
+            d.target_type,
+            d.total_stock,
+            d.max_participants,
+            d.winner_count,
+            d.price,
+            d.start_time,
+            d.end_time,
+            d.draw_time,
+            d.status,
+            d.description,
+            spu.name,
+            sk.color_name,
+            b.name
+        order by d.update_time desc, d.id desc
+    </select>
+
+    <select id="listActive" resultType="com.su.entity.Draw">
+        select * from draw
+        where status = 1
+        order by start_time desc, id desc
+    </select>
+
+    <select id="listWarmup" resultType="com.su.entity.Draw">
+        select *
+        from draw
+        where status in (0, 1)
+          and (start_time is null or start_time &lt;= #{windowEnd})
+          and (end_time is null or end_time &gt;= #{windowStart})
+        order by start_time asc, id asc
+    </select>
+</mapper>

@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.su.mapper.WarehouseMapper">
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        insert into warehouse
+        (name, code, longitude, latitude, address, phone, province, city, district, status, capacity, create_time, update_time)
+        values
+        (#{name}, #{code}, #{longitude}, #{latitude}, #{address}, #{phone}, #{province}, #{city}, #{district}, #{status}, #{capacity}, #{createTime}, #{updateTime})
+    </insert>
+
+    <update id="update">
+        update warehouse
+        <set>
+            <if test="name != null">
+                name = #{name},
+            </if>
+            <if test="code != null">
+                code = #{code},
+            </if>
+            <if test="longitude != null">
+                longitude = #{longitude},
+            </if>
+            <if test="latitude != null">
+                latitude = #{latitude},
+            </if>
+            <if test="address != null">
+                address = #{address},
+            </if>
+            <if test="phone != null">
+                phone = #{phone},
+            </if>
+            <if test="province != null">
+                province = #{province},
+            </if>
+            <if test="city != null">
+                city = #{city},
+            </if>
+            <if test="district != null">
+                district = #{district},
+            </if>
+            <if test="status != null">
+                status = #{status},
+            </if>
+            <if test="capacity != null">
+                capacity = #{capacity},
+            </if>
+            <if test="updateTime != null">
+                update_time = #{updateTime}
+            </if>
+        </set>
+        where id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        delete from warehouse where id = #{id}
+    </delete>
+
+    <select id="pageQuery" resultType="com.su.entity.Warehouse">
+        select * from warehouse
+        <where>
+            <if test="name != null and name != ''">
+                and name like concat('%',#{name},'%')
+            </if>
+            <if test="code != null and code != ''">
+                and code = #{code}
+            </if>
+            <if test="status != null">
+                and status = #{status}
+            </if>
+            <if test="province != null and province != ''">
+                and province = #{province}
+            </if>
+            <if test="city != null and city != ''">
+                and city = #{city}
+            </if>
+        </where>
+        order by update_time desc, id desc
+    </select>
+</mapper>
+
