@@ -1,9 +1,11 @@
 package com.su.service.airdrop.support;
 
+import com.github.benmanes.caffeine.cache.Cache;
 import com.su.constant.RedisKeyConstant;
 import com.su.entity.Airdrop;
 import com.su.entity.Coupon;
 import com.su.utils.cache.CacheClient;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Service;
@@ -22,15 +24,18 @@ public class AirdropRedisService {
 
     private final org.springframework.data.redis.core.StringRedisTemplate stringRedisTemplate;
     private final CacheClient cacheClient;
+    private final Cache<Long, AirdropMeta> airdropMetaLocalCache;
     private final DefaultRedisScript<Long> claimScript;
 
     public AirdropRedisService(
             org.springframework.data.redis.core.StringRedisTemplate stringRedisTemplate,
             com.fasterxml.jackson.databind.ObjectMapper objectMapper,
-            CacheClient cacheClient
+            CacheClient cacheClient,
+            @Qualifier("airdropMetaLocalCache") Cache<Long, AirdropMeta> airdropMetaLocalCache
     ) {
         this.stringRedisTemplate = stringRedisTemplate;
         this.cacheClient = cacheClient;
+        this.airdropMetaLocalCache = airdropMetaLocalCache;
         this.claimScript = new DefaultRedisScript<>();
         this.claimScript.setLocation(new ClassPathResource("lua/airdrop_claim.lua"));
         this.claimScript.setResultType(Long.class);
@@ -70,7 +75,15 @@ public class AirdropRedisService {
         if (airdropId == null) {
             return null;
         }
-        return cacheClient.getLogicalExpireValue(RedisKeyConstant.airdropMetaKey(airdropId), AirdropMeta.class);
+        AirdropMeta local = airdropMetaLocalCache.getIfPresent(airdropId);
+        if (local != null) {
+            return local;
+        }
+        AirdropMeta meta = cacheClient.getLogicalExpireValue(RedisKeyConstant.airdropMetaKey(airdropId), AirdropMeta.class);
+        if (meta != null) {
+            airdropMetaLocalCache.put(airdropId, meta);
+        }
+        return meta;
     }
 
     public void delete(Long airdropId) {
@@ -79,6 +92,7 @@ public class AirdropRedisService {
         }
         deleteStockAndUsers(airdropId);
         cacheClient.evict(RedisKeyConstant.airdropMetaKey(airdropId));
+        airdropMetaLocalCache.invalidate(airdropId);
     }
 
     public void deleteStockAndUsers(Long airdropId) {
@@ -131,6 +145,9 @@ public class AirdropRedisService {
         Duration physicalTtl = logicalTtl.plusHours(2);
 
         cacheClient.setLogicalExpireValue(key, meta, logicalTtl, physicalTtl);
+        if (meta != null) {
+            airdropMetaLocalCache.put(airdrop.getId(), meta);
+        }
     }
 
     private Duration ttlForAirdrop(Airdrop airdrop) {

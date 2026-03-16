@@ -2,8 +2,14 @@ package com.su.service;
 
 import com.su.dto.admin.BundleSaveDTO;
 import com.su.entity.Bundle;
+import com.su.mapper.AirdropMapper;
 import com.su.mapper.BundleMapper;
 import com.su.mapper.BundleShoeMapper;
+import com.su.mapper.CategoryMapper;
+import com.su.mapper.DrawMapper;
+import com.su.mapper.DrawRecordMapper;
+import com.su.mapper.ShoeSpuCategoryMapper;
+import com.su.mapper.ShoeSpuMapper;
 import com.su.service.impl.AdminProductServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -28,10 +34,28 @@ import static org.mockito.Mockito.*;
 class AdminProductServiceBundleTest {
 
     @Mock
+    private ShoeSpuMapper shoeSpuMapper;
+
+    @Mock
+    private ShoeSpuCategoryMapper shoeSpuCategoryMapper;
+
+    @Mock
+    private CategoryMapper categoryMapper;
+
+    @Mock
     private BundleMapper bundleMapper;
 
     @Mock
     private BundleShoeMapper bundleShoeMapper;
+
+    @Mock
+    private DrawMapper drawMapper;
+
+    @Mock
+    private DrawRecordMapper drawRecordMapper;
+
+    @Mock
+    private AirdropMapper airdropMapper;
 
     @InjectMocks
     private AdminProductServiceImpl adminProductService;
@@ -72,6 +96,8 @@ class AdminProductServiceBundleTest {
                 .image("test.jpg")
                 .status(1)
                 .build();
+
+        lenient().when(drawMapper.countWarmupByBundleId(anyLong())).thenReturn(0);
     }
 
     @Test
@@ -180,3 +206,4 @@ class AdminProductServiceBundleTest {
         verify(bundleMapper, never()).startOrStop(anyInt(), anyLong());
     }
 }
+

@@ -3,10 +3,9 @@ package com.su.test;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.su.constant.OrderAsyncStatusConstant;
 import com.su.service.impl.OrderServiceImpl;
+import com.su.utils.cache.CacheClient;
 import com.su.vo.OrderAsyncStatusVO;
 import org.junit.jupiter.api.Test;
-import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.data.redis.core.ValueOperations;
 
 import java.lang.reflect.Field;
 
@@ -29,14 +28,11 @@ public class OrderAsyncStatusParsingTest {
 
     @Test
     void getAsyncStatus_returnsFailedWhenJsonCorrupted() {
-        StringRedisTemplate stringRedisTemplate = mock(StringRedisTemplate.class);
-        @SuppressWarnings("unchecked")
-        ValueOperations<String, String> valueOps = mock(ValueOperations.class);
-        when(stringRedisTemplate.opsForValue()).thenReturn(valueOps);
-        when(valueOps.get(eq("preorder:ON_BAD"))).thenReturn("{");
+        CacheClient cacheClient = mock(CacheClient.class);
+        when(cacheClient.get(eq("preorder:ON_BAD"))).thenReturn("{");
 
         OrderServiceImpl service = new OrderServiceImpl();
-        setField(service, "stringRedisTemplate", stringRedisTemplate);
+        setField(service, "cacheClient", cacheClient);
         setField(service, "objectMapper", new ObjectMapper());
 
         OrderAsyncStatusVO vo = service.getAsyncStatus("ON_BAD");
@@ -49,14 +45,11 @@ public class OrderAsyncStatusParsingTest {
 
     @Test
     void getAsyncStatus_returnsNotFoundWhenMissing() {
-        StringRedisTemplate stringRedisTemplate = mock(StringRedisTemplate.class);
-        @SuppressWarnings("unchecked")
-        ValueOperations<String, String> valueOps = mock(ValueOperations.class);
-        when(stringRedisTemplate.opsForValue()).thenReturn(valueOps);
-        when(valueOps.get(eq("preorder:ON_MISS"))).thenReturn(null);
+        CacheClient cacheClient = mock(CacheClient.class);
+        when(cacheClient.get(eq("preorder:ON_MISS"))).thenReturn(null);
 
         OrderServiceImpl service = new OrderServiceImpl();
-        setField(service, "stringRedisTemplate", stringRedisTemplate);
+        setField(service, "cacheClient", cacheClient);
         setField(service, "objectMapper", new ObjectMapper());
 
         OrderAsyncStatusVO vo = service.getAsyncStatus("ON_MISS");
@@ -66,4 +59,3 @@ public class OrderAsyncStatusParsingTest {
         assertEquals(OrderAsyncStatusConstant.NOT_FOUND, vo.getStatus());
     }
 }
-

@@ -21,16 +21,16 @@ public class LocalCacheConfiguration {
                 .build();
     }
 
-    @Bean(name = "drawDetailLocalCache")
-    public Cache<Long, DrawDetailVO> drawDetailLocalCache() {
+    @Bean
+    public Cache<Long, AirdropMeta> airdropMetaLocalCache() {
         return Caffeine.newBuilder()
-                .maximumSize(2000)
+                .maximumSize(5000)
                 .expireAfterWrite(Duration.ofSeconds(10))
                 .build();
     }
 
-    @Bean(name = "airdropMetaLocalCache")
-    public Cache<Long, AirdropMeta> airdropMetaLocalCache() {
+    @Bean
+    public Cache<Long, DrawDetailVO> drawDetailLocalCache() {
         return Caffeine.newBuilder()
                 .maximumSize(2000)
                 .expireAfterWrite(Duration.ofSeconds(10))

@@ -1,5 +1,6 @@
 package com.su.service.impl;
 
+import com.github.benmanes.caffeine.cache.Cache;
 import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
 import com.github.benmanes.caffeine.cache.Cache;
@@ -129,7 +130,8 @@ public class DrawServiceImpl implements DrawService {
     private CacheClient cacheClient;
     @Autowired
     @Qualifier("drawDetailLocalCache")
-    private Cache<Long, DrawDetailVO> drawDetailLocalCache;    @Autowired
+    private Cache<Long, DrawDetailVO> drawDetailLocalCache;
+    @Autowired
     private RedissonClient redissonClient;
     @Autowired
     private RabbitTemplate rabbitTemplate;
@@ -242,8 +244,7 @@ public class DrawServiceImpl implements DrawService {
     @Override
     public void deleteById(Long id) {
         drawMapper.deleteById(id);
-        cacheClient.evict(RedisKeyConstant.drawDetailKey(id));
-        drawRedisService.deleteForDraw(id);
+        clearDrawCache(id);
     }
 
     @Override
@@ -390,20 +391,18 @@ public class DrawServiceImpl implements DrawService {
         return drawRecordMapper.getByDrawIdAndUserId(drawId, userId);
     }
 
-        @Override
+    @Override
     public DrawDetailVO detail(Long drawId) {
         if (drawId == null) {
             return null;
         }
-        if (drawDetailLocalCache != null) {
-            DrawDetailVO local = drawDetailLocalCache.getIfPresent(drawId);
-            if (local != null) {
-                return local;
-            }
+        DrawDetailVO local = drawDetailLocalCache.getIfPresent(drawId);
+        if (local != null) {
+            return local;
         }
         String key = RedisKeyConstant.drawDetailKey(drawId);
         String lockKey = RedisKeyConstant.lockKey(key);
-        
+
         // 优化：活动详情使用逻辑过期缓存，适用于预热场景
         // 逻辑TTL较短(10分钟)，但物理TTL较长(2小时)，过期后异步更新
         DrawDetailVO vo = cacheClient.queryWithLogicalExpire(
@@ -417,27 +416,9 @@ public class DrawServiceImpl implements DrawService {
                 null,
                 null
         );
-        if (vo != null && drawDetailLocalCache != null) {
+        if (vo != null) {
             drawDetailLocalCache.put(drawId, vo);
         }
-        return vo;
-    }
-        String key = RedisKeyConstant.drawDetailKey(drawId);
-        String lockKey = RedisKeyConstant.lockKey(key);
-        
-        // 优化：活动详情使用逻辑过期缓存，适用于预热场景
-        // 逻辑TTL较短(10分钟)，但物理TTL较长(2小时)，过期后异步更新
-        DrawDetailVO vo = cacheClient.queryWithLogicalExpire(
-                key,
-                lockKey,
-                DrawDetailVO.class,
-                () -> buildDrawDetail(drawId),
-                Duration.ofMinutes(10),   // 逻辑TTL: 10分钟
-                Duration.ofHours(2),      // 物理TTL: 2小时
-                Duration.ofMinutes(1),    // 空值TTL: 1分钟
-                null,
-                null
-        );
         return vo;
     }
 
@@ -1110,9 +1091,7 @@ public class DrawServiceImpl implements DrawService {
                     Duration.ofMinutes(10),
                     Duration.ofHours(2)
             );
-            if (drawDetailLocalCache != null) {
-                drawDetailLocalCache.put(drawId, detailVO);
-            }
+            drawDetailLocalCache.put(drawId, detailVO);
         }
     }
 
@@ -1124,17 +1103,10 @@ public class DrawServiceImpl implements DrawService {
             return;
         }
         cacheClient.evict(RedisKeyConstant.drawDetailKey(drawId));
-        if (drawDetailLocalCache != null) {
-            drawDetailLocalCache.invalidate(drawId);
-        }
+        drawDetailLocalCache.invalidate(drawId);
         drawRedisService.deleteForDraw(drawId);
     }
 }
-
-
-
-
-
 
 
 

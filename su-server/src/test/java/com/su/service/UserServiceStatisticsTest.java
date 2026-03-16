@@ -50,7 +50,7 @@ class UserServiceStatisticsTest {
         userService.updateFollowerCount(testUserId, 1);
 
         verify(userMapper, times(1)).updateFollowerCount(testUserId, 1);
-        verify(cacheClient, times(1)).delete(anyString());
+        verify(cacheClient, times(1)).evict(anyString());
     }
 
     @Test
@@ -58,7 +58,7 @@ class UserServiceStatisticsTest {
         userService.updateFollowerCount(testUserId, -1);
 
         verify(userMapper, times(1)).updateFollowerCount(testUserId, -1);
-        verify(cacheClient, times(1)).delete(anyString());
+        verify(cacheClient, times(1)).evict(anyString());
     }
 
     @Test
@@ -68,7 +68,7 @@ class UserServiceStatisticsTest {
         userService.updateFollowerCount(testUserId, 0);
 
         verify(userMapper, never()).updateFollowerCount(anyLong(), anyInt());
-        verify(cacheClient, never()).delete(anyString());
+        verify(cacheClient, never()).evict(anyString());
     }
 
     @Test
@@ -76,7 +76,7 @@ class UserServiceStatisticsTest {
         userService.updateFollowingCount(testUserId, 1);
 
         verify(userMapper, times(1)).updateFollowingCount(testUserId, 1);
-        verify(cacheClient, times(1)).delete(anyString());
+        verify(cacheClient, times(1)).evict(anyString());
     }
 
     @Test
@@ -84,7 +84,7 @@ class UserServiceStatisticsTest {
         userService.updateFollowingCount(testUserId, -1);
 
         verify(userMapper, times(1)).updateFollowingCount(testUserId, -1);
-        verify(cacheClient, times(1)).delete(anyString());
+        verify(cacheClient, times(1)).evict(anyString());
     }
 
     @Test
@@ -94,7 +94,7 @@ class UserServiceStatisticsTest {
         userService.updateFollowingCount(testUserId, 0);
 
         verify(userMapper, never()).updateFollowingCount(anyLong(), anyInt());
-        verify(cacheClient, never()).delete(anyString());
+        verify(cacheClient, never()).evict(anyString());
     }
 
     @Test
@@ -102,7 +102,7 @@ class UserServiceStatisticsTest {
         userService.updateLikedCount(testUserId, 1);
 
         verify(userMapper, times(1)).updateLikedCount(testUserId, 1);
-        verify(cacheClient, times(1)).delete(anyString());
+        verify(cacheClient, times(1)).evict(anyString());
     }
 
     @Test
@@ -110,7 +110,7 @@ class UserServiceStatisticsTest {
         userService.updateLikedCount(testUserId, -1);
 
         verify(userMapper, times(1)).updateLikedCount(testUserId, -1);
-        verify(cacheClient, times(1)).delete(anyString());
+        verify(cacheClient, times(1)).evict(anyString());
     }
 
     @Test
@@ -120,7 +120,7 @@ class UserServiceStatisticsTest {
         userService.updateLikedCount(testUserId, 0);
 
         verify(userMapper, never()).updateLikedCount(anyLong(), anyInt());
-        verify(cacheClient, never()).delete(anyString());
+        verify(cacheClient, never()).evict(anyString());
     }
 
     @Test
@@ -128,7 +128,7 @@ class UserServiceStatisticsTest {
         userService.updatePostCount(testUserId, 1);
 
         verify(userMapper, times(1)).updatePostCount(testUserId, 1);
-        verify(cacheClient, times(1)).delete(anyString());
+        verify(cacheClient, times(1)).evict(anyString());
     }
 
     @Test
@@ -136,7 +136,7 @@ class UserServiceStatisticsTest {
         userService.updatePostCount(testUserId, -1);
 
         verify(userMapper, times(1)).updatePostCount(testUserId, -1);
-        verify(cacheClient, times(1)).delete(anyString());
+        verify(cacheClient, times(1)).evict(anyString());
     }
 
     @Test
@@ -146,7 +146,7 @@ class UserServiceStatisticsTest {
         userService.updatePostCount(testUserId, 0);
 
         verify(userMapper, never()).updatePostCount(anyLong(), anyInt());
-        verify(cacheClient, never()).delete(anyString());
+        verify(cacheClient, never()).evict(anyString());
     }
 
     @Test
@@ -172,3 +172,4 @@ class UserServiceStatisticsTest {
         assertNull(result);
     }
 }
+
