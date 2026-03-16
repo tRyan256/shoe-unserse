@@ -1,5 +1,6 @@
 package com.su.service.impl;
 
+import com.github.benmanes.caffeine.cache.Cache;
 import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
 import com.su.utils.cache.CacheClient;
@@ -61,6 +62,7 @@ import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.amqp.core.MessageDeliveryMode;
 import org.springframework.amqp.rabbit.connection.CorrelationData;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -125,6 +127,9 @@ public class DrawServiceImpl implements DrawService {
     private StringRedisTemplate stringRedisTemplate;
     @Autowired
     private CacheClient cacheClient;
+    @Autowired
+    @Qualifier("drawDetailLocalCache")
+    private Cache<Long, DrawDetailVO> drawDetailLocalCache;
     @Autowired
     private RedissonClient redissonClient;
     @Autowired
@@ -238,8 +243,7 @@ public class DrawServiceImpl implements DrawService {
     @Override
     public void deleteById(Long id) {
         drawMapper.deleteById(id);
-        cacheClient.evict(RedisKeyConstant.drawDetailKey(id));
-        drawRedisService.deleteForDraw(id);
+        clearDrawCache(id);
     }
 
     @Override
@@ -391,9 +395,13 @@ public class DrawServiceImpl implements DrawService {
         if (drawId == null) {
             return null;
         }
+        DrawDetailVO local = drawDetailLocalCache.getIfPresent(drawId);
+        if (local != null) {
+            return local;
+        }
         String key = RedisKeyConstant.drawDetailKey(drawId);
         String lockKey = RedisKeyConstant.lockKey(key);
-        
+
         // 优化：活动详情使用逻辑过期缓存，适用于预热场景
         // 逻辑TTL较短(10分钟)，但物理TTL较长(2小时)，过期后异步更新
         DrawDetailVO vo = cacheClient.queryWithLogicalExpire(
@@ -407,6 +415,9 @@ public class DrawServiceImpl implements DrawService {
                 null,
                 null
         );
+        if (vo != null) {
+            drawDetailLocalCache.put(drawId, vo);
+        }
         return vo;
     }
 
@@ -1079,6 +1090,7 @@ public class DrawServiceImpl implements DrawService {
                     Duration.ofMinutes(10),
                     Duration.ofHours(2)
             );
+            drawDetailLocalCache.put(drawId, detailVO);
         }
     }
 
@@ -1090,9 +1102,16 @@ public class DrawServiceImpl implements DrawService {
             return;
         }
         cacheClient.evict(RedisKeyConstant.drawDetailKey(drawId));
+        drawDetailLocalCache.invalidate(drawId);
         drawRedisService.deleteForDraw(drawId);
     }
 }
+
+
+
+
+
+
 
 
 
