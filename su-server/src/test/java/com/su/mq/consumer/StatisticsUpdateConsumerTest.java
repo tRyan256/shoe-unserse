@@ -49,7 +49,7 @@ class StatisticsUpdateConsumerTest {
         
         verify(cacheClient, times(1)).exists(anyString());
         verify(userMapper, times(1)).updateLikedCount(2L, 1);
-        verify(cacheClient, times(1)).delete(anyString());
+        verify(cacheClient, times(1)).evict(anyString());
         verify(cacheClient, times(1)).set(anyString(), eq("1"), any(Duration.class));
     }
     
@@ -69,7 +69,7 @@ class StatisticsUpdateConsumerTest {
         consumer.handleMessage(message);
         
         verify(userMapper, times(1)).updateLikedCount(2L, -1);
-        verify(cacheClient, times(1)).delete(anyString());
+        verify(cacheClient, times(1)).evict(anyString());
         verify(cacheClient, times(1)).set(anyString(), eq("1"), any(Duration.class));
     }
     
@@ -89,7 +89,7 @@ class StatisticsUpdateConsumerTest {
         
         verify(userMapper, times(1)).updateFollowerCount(2L, 1);
         verify(userMapper, times(1)).updateFollowingCount(1L, 1);
-        verify(cacheClient, times(2)).delete(anyString());
+        verify(cacheClient, times(2)).evict(anyString());
         verify(cacheClient, times(1)).set(anyString(), eq("1"), any(Duration.class));
     }
     
@@ -109,7 +109,7 @@ class StatisticsUpdateConsumerTest {
         
         verify(userMapper, times(1)).updateFollowerCount(2L, -1);
         verify(userMapper, times(1)).updateFollowingCount(1L, -1);
-        verify(cacheClient, times(2)).delete(anyString());
+        verify(cacheClient, times(2)).evict(anyString());
         verify(cacheClient, times(1)).set(anyString(), eq("1"), any(Duration.class));
     }
     
@@ -214,3 +214,4 @@ class StatisticsUpdateConsumerTest {
         verify(cacheClient, times(1)).set(anyString(), eq("1"), any(Duration.class));
     }
 }
+
