@@ -3,6 +3,7 @@ package com.su.config;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.su.entity.Category;
+import com.su.service.airdrop.support.AirdropMeta;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -16,6 +17,14 @@ public class LocalCacheConfiguration {
         return Caffeine.newBuilder()
                 .maximumSize(100)
                 .expireAfterWrite(Duration.ofSeconds(30))
+                .build();
+    }
+
+    @Bean
+    public Cache<Long, AirdropMeta> airdropMetaLocalCache() {
+        return Caffeine.newBuilder()
+                .maximumSize(5000)
+                .expireAfterWrite(Duration.ofSeconds(10))
                 .build();
     }
 }
