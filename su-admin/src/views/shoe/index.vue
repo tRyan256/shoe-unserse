@@ -1,27 +1,22 @@
 <template>
   <div class="shoe-container">
     <el-card>
+      <!-- 搜索表单 -->
       <el-form :model="queryParams" inline class="search-form">
-        <el-form-item label="鞋款名称">
+        <el-form-item label="SPU名称">
           <el-input 
             v-model="queryParams.name" 
-            placeholder="请输入鞋款名称"
+            placeholder="请输入SPU名称"
             clearable
             @keyup.enter="handleQuery"
           />
         </el-form-item>
         <el-form-item label="品牌">
-          <el-select 
-            v-model="queryParams.brand" 
-            placeholder="请选择品牌" 
-            clearable 
-            filterable
-            style="width: 150px;"
-          >
+          <el-select v-model="queryParams.brand" placeholder="请选择品牌" clearable filterable style="width: 150px;">
             <el-option 
               v-for="item in brandOptions" 
               :key="item.id" 
-              :label="item.name"
+              :label="item.name" 
               :value="item.name" 
             />
           </el-select>
@@ -62,6 +57,7 @@
         </el-form-item>
       </el-form>
 
+      <!-- 操作按钮 -->
       <div class="table-operations">
         <el-button type="primary" @click="handleAddSpu">
           <el-icon><Plus /></el-icon>
@@ -77,134 +73,39 @@
         </el-button>
       </div>
 
+      <!-- SPU 数据表格 -->
       <el-table 
         :data="tableData" 
         v-loading="loading" 
         border 
         stripe
         @selection-change="handleSelectionChange"
-        @expand-change="handleExpandChange"
-        row-key="id"
       >
         <el-table-column type="selection" width="50" />
-        <el-table-column type="expand">
+        <el-table-column prop="image" label="图片" width="100">
           <template #default="{ row }">
-            <div class="sku-expand-container">
-              <div class="sku-header">
-                <span class="sku-title">SKU 列表（颜色款式）</span>
-                <el-button 
-                  type="primary" 
-                  size="small" 
-                  @click="handleAddSku(row)"
-                >
-                  <el-icon><Plus /></el-icon>
-                  增加SKU
-                </el-button>
-              </div>
-              <div v-loading="row.skuLoading">
-                <el-table :data="row.skuList" border size="small" v-if="row.skuList && row.skuList.length > 0" style="width: 100%;">
-                  <el-table-column type="index" label="序号" width="50" align="center" />
-                  <el-table-column prop="image" label="图片" width="80" align="center">
-                    <template #default="{ row: sku }">
-                      <el-image 
-                        :src="sku.image" 
-                        :preview-src-list="[sku.image]"
-                        fit="cover"
-                        style="width: 50px; height: 50px; border-radius: 4px;"
-                      >
-                        <template #error>
-                          <div class="image-placeholder">
-                            <el-icon><Picture /></el-icon>
-                          </div>
-                        </template>
-                      </el-image>
-                    </template>
-                  </el-table-column>
-                  <el-table-column prop="colorName" label="颜色" width="120" />
-                  <el-table-column prop="price" label="价格" width="100" align="center">
-                    <template #default="{ row: sku }">
-                      <span class="price">¥{{ sku.price }}</span>
-                    </template>
-                  </el-table-column>
-                  <el-table-column prop="stock" label="库存" width="80" align="center">
-                    <template #default="{ row: sku }">
-                      <el-tag :type="getStockTagType(sku.stock)" size="small">{{ sku.stock || 0 }}</el-tag>
-                    </template>
-                  </el-table-column>
-                  <el-table-column prop="salesCount" label="销量" width="80" align="center" />
-                  <el-table-column prop="isDefault" label="默认" width="70" align="center">
-                    <template #default="{ row: sku }">
-                      <el-tag v-if="sku.isDefault === 1" type="success" size="small">默认</el-tag>
-                      <span v-else style="color: #909399;">-</span>
-                    </template>
-                  </el-table-column>
-                  <el-table-column prop="status" label="状态" width="80" align="center">
-                    <template #default="{ row: sku }">
-                      <el-switch
-                        v-model="sku.status"
-                        :active-value="1"
-                        :inactive-value="0"
-                        @change="handleSkuStatusChange(sku)"
-                      />
-                    </template>
-                  </el-table-column>
-                  <el-table-column label="操作" width="200" align="center">
-                    <template #default="{ row: sku }">
-                      <el-button 
-                        v-if="sku.isDefault !== 1" 
-                        type="success" 
-                        link 
-                        size="small" 
-                        @click="handleSetDefaultSku(row, sku)"
-                      >
-                        设为默认
-                      </el-button>
-                      <el-button type="primary" link size="small" @click="handleEditSku(row, sku)">
-                        编辑
-                      </el-button>
-                      <el-button type="danger" link size="small" @click="handleDeleteSku(row, sku)">
-                        删除
-                      </el-button>
-                    </template>
-                  </el-table-column>
-                </el-table>
-                <div v-else class="sku-empty-actions">
-                  <el-empty description="暂无SKU数据" :image-size="80" />
-                  <el-button type="primary" @click="handleAddSku(row)">
-                    <el-icon><Plus /></el-icon>
-                    增加SKU
-                  </el-button>
+            <el-image 
+              :src="row.image" 
+              :preview-src-list="[row.image]"
+              fit="cover"
+              style="width: 60px; height: 60px; border-radius: 4px;"
+              placeholder="暂无图片"
+            >
+              <template #error>
+                <div class="image-placeholder">
+                  <el-icon><Picture /></el-icon>
                 </div>
-              </div>
-            </div>
+              </template>
+            </el-image>
           </template>
         </el-table-column>
         <el-table-column prop="name" label="SPU名称" min-width="150" show-overflow-tooltip />
         <el-table-column prop="brand" label="品牌" width="100" show-overflow-tooltip />
         <el-table-column prop="model" label="型号" width="100" show-overflow-tooltip />
-        <el-table-column label="价格区间" width="120">
-          <template #default="{ row }">
-            <span v-if="row.minPrice && row.maxPrice">
-              <span class="price">¥{{ row.minPrice }}</span>
-              <span v-if="row.minPrice !== row.maxPrice"> - ¥{{ row.maxPrice }}</span>
-            </span>
-            <span v-else>-</span>
-          </template>
-        </el-table-column>
-        <el-table-column prop="colorCount" label="颜色数" width="80">
-          <template #default="{ row }">
-            <el-tag type="info" size="small">{{ row.colorCount || 0 }}种</el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column prop="totalStock" label="总库存" width="90">
-          <template #default="{ row }">
-            <el-tag :type="getStockTagType(row.totalStock)">{{ row.totalStock || 0 }}</el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column prop="salesCount" label="销量" width="80" />
+        <el-table-column prop="releaseDate" label="发售日期" width="100" />
         <el-table-column prop="isLimited" label="限量款" width="80">
           <template #default="{ row }">
-            <el-tag :type="row.isLimited === 1 ? 'danger' : 'info'">
+            <el-tag :type="row.isLimited === 1 ? 'danger' : 'info">
               {{ row.isLimited === 1 ? '是' : '否' }}
             </el-tag>
           </template>
@@ -212,7 +113,7 @@
         <el-table-column prop="categoryNames" label="分类" min-width="150">
           <template #default="{ row }">
             <el-tag 
-              v-for="(name, index) in parseCategoryNames(row.categoryNames)" 
+              v-for="(name, index) in row.categoryNames" 
               :key="index"
               type="info"
               size="small"
@@ -220,7 +121,7 @@
             >
               {{ name }}
             </el-tag>
-            <span v-if="!row.categoryNames">-</span>
+            <span v-if="!row.categoryNames || row.categoryNames.length === 0">-</span>
           </template>
         </el-table-column>
         <el-table-column prop="status" label="状态" width="80">
@@ -233,18 +134,15 @@
             />
           </template>
         </el-table-column>
-        <el-table-column label="创建时间" min-width="140">
-          <template #default="{ row }">
-            {{ row.createTime || row.create_time }}
-          </template>
-        </el-table-column>
+        <el-table-column prop="createTime" label="创建时间" min-width="140" />
+        <el-table-column prop="updateTime" label="修改时间" min-width="140" />
         <el-table-column label="操作" width="200" fixed="right">
           <template #default="{ row }">
+            <el-button type="primary" link @click="handleViewSkus(row)">
+              查看SKU
+            </el-button>
             <el-button type="primary" link @click="handleEditSpu(row)">
               编辑
-            </el-button>
-            <el-button type="success" link @click="handleAddSku(row)">
-              新增SKU
             </el-button>
             <el-button type="danger" link @click="handleDeleteSpu(row)">
               删除
@@ -253,6 +151,7 @@
         </el-table-column>
       </el-table>
 
+      <!-- 分页 -->
       <el-pagination
         v-model:current-page="queryParams.page"
         v-model:page-size="queryParams.pageSize"
@@ -264,10 +163,11 @@
       />
     </el-card>
 
+    <!-- SPU 新增/编辑对话框 -->
     <el-dialog
       v-model="spuDialogVisible"
       :title="spuDialogTitle"
-      width="600px"
+      width="700px"
       @close="handleSpuDialogClose"
       destroy-on-close
     >
@@ -277,14 +177,6 @@
         :rules="spuFormRules"
         label-width="100px"
       >
-        <el-alert
-          v-if="isSpuEdit"
-          type="warning"
-          show-icon
-          :closable="false"
-          title="若该商品关联抽签活动且活动缓存未结束，系统将禁止修改，请等待缓存结束后再操作。"
-          class="edit-warning"
-        />
         <el-row :gutter="20">
           <el-col :span="12">
             <el-form-item label="SPU名称" prop="name">
@@ -293,17 +185,11 @@
           </el-col>
           <el-col :span="12">
             <el-form-item label="品牌" prop="brand">
-              <el-select 
-                v-model="spuFormData.brand" 
-                placeholder="请选择品牌"
-                filterable
-                allow-create
-                style="width: 100%;"
-              >
+              <el-select v-model="spuFormData.brand" placeholder="请选择品牌" filterable allow-create style="width: 100%;">
                 <el-option 
                   v-for="item in brandOptions" 
                   :key="item.id" 
-                  :label="item.name"
+                  :label="item.name" 
                   :value="item.name" 
                 />
               </el-select>
@@ -342,10 +228,11 @@
                 <el-option 
                   v-for="item in categoryOptions" 
                   :key="item.id" 
-                  :label="item.name"
+                  :label="`${item.name} (${item.type === 1 ? '品牌' : '风格'})`"
                   :value="item.id" 
                 />
               </el-select>
+              <div class="form-tip">可以关联多个品牌或风格分类，例如同时关联"Nike"品牌和"篮球鞋"风格</div>
             </el-form-item>
           </el-col>
         </el-row>
@@ -359,6 +246,27 @@
             </el-form-item>
           </el-col>
         </el-row>
+        <el-form-item label="SPU图片" prop="image">
+          <el-upload
+            class="image-uploader"
+            :show-file-list="false"
+            :before-upload="beforeImageUpload"
+            :http-request="handleImageUpload"
+            accept="image/*"
+          >
+            <el-image 
+              v-if="spuFormData.image" 
+              :src="spuFormData.image" 
+              fit="cover"
+              class="uploaded-image"
+            />
+            <div v-else class="upload-placeholder">
+              <el-icon class="upload-icon"><Plus /></el-icon>
+              <span>上传图片</span>
+            </div>
+          </el-upload>
+          <div class="upload-tip">建议尺寸: 800x800px，支持 jpg、png 格式，大小不超过 2MB</div>
+        </el-form-item>
         <el-form-item label="描述" prop="description">
           <el-input 
             v-model="spuFormData.description" 
@@ -372,17 +280,79 @@
       </el-form>
       <template #footer>
         <el-button @click="spuDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="handleSubmitSpu" :loading="submitLoading">
+        <el-button type="primary" @click="handleSpuSubmit" :loading="spuSubmitLoading">
           确定
         </el-button>
       </template>
     </el-dialog>
 
+    <!-- SKU 管理对话框 -->
     <el-dialog
       v-model="skuDialogVisible"
-      :title="skuDialogTitle"
-      width="700px"
+      :title="`SKU管理 - ${currentSpu?.name || ''}`"
+      width="900px"
       @close="handleSkuDialogClose"
+      destroy-on-close
+    >
+      <el-button type="primary" @click="handleAddSku" style="margin-bottom: 15px;">
+        <el-icon><Plus /></el-icon>
+        新增SKU
+      </el-button>
+      
+      <el-table 
+        :data="skuTableData" 
+        v-loading="skuLoading" 
+        border 
+        stripe
+      >
+        <el-table-column prop="colorName" label="颜色" width="100" />
+        <el-table-column prop="price" label="价格" width="100">
+          <template #default="{ row }">
+            <span class="price">¥{{ row.price }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="stock" label="总库存" width="100">
+          <template #default="{ row }">
+            <el-tooltip content="点击查看详情" placement="top">
+              <el-button 
+                link 
+                type="primary" 
+                @click="handleShowSkuStockDetail(row)"
+              >
+                <el-tag :type="getStockTagType(row.stock)">{{ row.stock || 0 }}</el-tag>
+              </el-button>
+            </el-tooltip>
+          </template>
+        </el-table-column>
+        <el-table-column prop="status" label="状态" width="80">
+          <template #default="{ row }">
+            <el-switch
+              v-model="row.status"
+              :active-value="1"
+              :inactive-value="0"
+              @change="handleSkuStatusChange(row)"
+            />
+          </template>
+        </el-table-column>
+        <el-table-column label="操作" width="150" fixed="right">
+          <template #default="{ row }">
+            <el-button type="primary" link @click="handleEditSku(row)">
+              编辑
+            </el-button>
+            <el-button type="danger" link @click="handleDeleteSku(row)">
+              删除
+            </el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+    </el-dialog>
+
+    <!-- SKU 新增/编辑对话框 -->
+    <el-dialog
+      v-model="singleSkuDialogVisible"
+      :title="singleSkuDialogTitle"
+      width="700px"
+      @close="handleSingleSkuDialogClose"
       destroy-on-close
     >
       <el-form
@@ -391,18 +361,10 @@
         :rules="skuFormRules"
         label-width="100px"
       >
-        <el-alert
-          v-if="isSkuEdit"
-          type="warning"
-          show-icon
-          :closable="false"
-          title="若该商品关联抽签活动且活动缓存未结束，系统将禁止修改，请等待缓存结束后再操作。"
-          class="edit-warning"
-        />
         <el-row :gutter="20">
           <el-col :span="12">
             <el-form-item label="颜色名称" prop="colorName">
-              <el-input v-model="skuFormData.colorName" placeholder="如：黑白配色、纯白" maxlength="50" />
+              <el-input v-model="skuFormData.colorName" placeholder="请输入颜色名称" maxlength="50" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
@@ -423,7 +385,7 @@
             class="image-uploader"
             :show-file-list="false"
             :before-upload="beforeImageUpload"
-            :http-request="handleImageUpload"
+            :http-request="handleSkuImageUpload"
             accept="image/*"
           >
             <el-image 
@@ -439,10 +401,10 @@
           </el-upload>
           <div class="upload-tip">建议尺寸: 800x800px，支持 jpg、png 格式，大小不超过 2MB</div>
         </el-form-item>
-        <el-form-item label="尺码库存" prop="sizes">
+        <el-form-item label="尺码库存" prop="sizeStockList">
           <div class="size-stock-container">
             <div 
-              v-for="(item, index) in skuFormData.sizes" 
+              v-for="(item, index) in skuFormData.sizeStockList" 
               :key="index" 
               class="size-stock-item"
             >
@@ -472,10 +434,10 @@
                 :icon="Delete" 
                 circle 
                 style="margin-left: 10px;"
-                @click="handleRemoveSizeStock(index)"
+                @click="handleRemoveSkuSizeStock(index)"
               />
             </div>
-            <el-button type="primary" plain @click="handleAddSizeStock">
+            <el-button type="primary" plain @click="handleAddSkuSizeStock">
               <el-icon><Plus /></el-icon>
               添加尺码
             </el-button>
@@ -483,42 +445,86 @@
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="skuDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="handleSubmitSku" :loading="submitLoading">
+        <el-button @click="singleSkuDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="handleSingleSkuSubmit" :loading="singleSkuSubmitLoading">
           确定
         </el-button>
       </template>
+    </el-dialog>
+
+    <!-- SKU 库存详情弹窗 -->
+    <el-dialog
+      v-model="skuStockDetailVisible"
+      title="SKU库存详情"
+      width="500px"
+    >
+      <div class="stock-detail">
+        <div class="shoe-info">
+          <el-image 
+            :src="skuStockDetailData.image" 
+            fit="cover"
+            style="width: 80px; height: 80px; border-radius: 4px;"
+          />
+          <div class="shoe-meta">
+            <div class="shoe-name">{{ skuStockDetailData.colorName }}</div>
+            <div class="shoe-brand">{{ currentSpu?.name }}</div>
+          </div>
+        </div>
+        <el-divider />
+        <div class="stock-list">
+          <div class="stock-header">
+            <span class="col-size">尺码</span>
+            <span class="col-stock">库存</span>
+          </div>
+          <div 
+            v-for="item in skuStockDetailData.sizes" 
+            :key="item.id" 
+            class="stock-item"
+          >
+            <span class="col-size">{{ item.size }}码</span>
+            <span class="col-stock">
+              <el-tag :type="getStockTagType(item.stock)" size="small">
+                {{ item.stock }}
+              </el-tag>
+            </span>
+          </div>
+          <div v-if="!skuStockDetailData.sizes || skuStockDetailData.sizes.length === 0" class="no-data">
+            暂无库存数据
+          </div>
+        </div>
+        <el-divider />
+        <div class="stock-total">
+          <span>总库存：</span>
+          <el-tag :type="getStockTagType(skuStockDetailData.stock)" size="large">
+            {{ skuStockDetailData.stock || 0 }} 双
+          </el-tag>
+        </div>
+      </div>
     </el-dialog>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, computed } from 'vue'
 import { 
-  getSpuList, 
-  addSpu, 
-  updateSpu, 
-  getSpuById, 
-  deleteSpu, 
-  updateSpuStatus 
-} from '@/api/shoeSpu'
-import { 
-  getSkuListBySpuId, 
-  addSku, 
-  updateSku, 
-  getSkuById, 
-  deleteSku,
-  updateSkuStatus,
-  setDefaultSku
-} from '@/api/shoeSku'
+  getShoeList, 
+  addShoe, 
+  updateShoe, 
+  getShoeById, 
+  deleteShoe, 
+  updateShoeStatus,
+  uploadShoeImage 
+} from '@/api/shoe'
 import { getCategoryOptions } from '@/api/category'
-import { uploadFile } from '@/api/common'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Delete, Plus, Search, Refresh, Picture } from '@element-plus/icons-vue'
 
+// 加载状态
 const loading = ref(false)
 const submitLoading = ref(false)
+const uploadLoading = ref(false)
 
+// 查询参数
 const queryParams = reactive({
   name: '',
   brand: '',
@@ -528,105 +534,113 @@ const queryParams = reactive({
   pageSize: 10
 })
 
+// 表格数据
 const tableData = ref([])
 const total = ref(0)
+
+// 选中的ID列表
 const selectedIds = ref([])
+
+// 分类选项
 const categoryOptions = ref([])
+
+// 品牌选项
 const brandOptions = ref([])
 
+// 常用尺码选项
 const sizeOptions = [
   '35', '35.5', '36', '36.5', '37', '37.5', '38', '38.5', 
   '39', '39.5', '40', '40.5', '41', '41.5', '42', '42.5', 
   '43', '43.5', '44', '44.5', '45', '45.5', '46', '46.5', '47'
 ]
 
-const spuDialogVisible = ref(false)
-const spuDialogTitle = ref('新增SPU')
-const isSpuEdit = ref(false)
-const spuFormRef = ref(null)
+// 对话框
+const dialogVisible = ref(false)
+const dialogTitle = ref('新增鞋款')
+const isEdit = ref(false)
+const formRef = ref(null)
 
-const skuDialogVisible = ref(false)
-const skuDialogTitle = ref('新增SKU')
-const isSkuEdit = ref(false)
-const skuFormRef = ref(null)
-const currentSpuId = ref(null)
+// 库存详情弹窗
+const stockDetailVisible = ref(false)
+const stockDetailData = ref({
+  id: null,
+  name: '',
+  brand: '',
+  image: '',
+  stock: 0,
+  sizes: []
+})
 
-const spuFormData = reactive({
+// 表单数据
+const formData = reactive({
   id: null,
   name: '',
   brand: '',
   model: '',
+  color: '',
   releaseDate: null,
   isLimited: 0,
-  categoryIds: [],
-  description: ''
-})
-
-const skuFormData = reactive({
-  id: null,
-  spuId: null,
-  colorName: '',
   price: null,
+  categoryIds: [],
   image: '',
-  sizes: []
+  description: '',
+  sizeStockList: []
 })
 
-const spuFormRules = {
+// 表单校验规则
+const formRules = {
   name: [
-    { required: true, message: '请输入SPU名称', trigger: 'blur' },
+    { required: true, message: '请输入鞋款名称', trigger: 'blur' },
     { min: 2, max: 100, message: '长度在 2 到 100 个字符', trigger: 'blur' }
-  ]
-}
-
-const skuFormRules = {
-  colorName: [
-    { required: true, message: '请输入颜色名称', trigger: 'blur' }
+  ],
+  brand: [
+    { required: true, message: '请输入品牌', trigger: 'blur' }
   ],
   price: [
     { required: true, message: '请输入价格', trigger: 'blur' }
   ],
+  categoryIds: [
+    { required: true, message: '请选择至少一个分类', trigger: 'change', type: 'array', min: 1 }
+  ],
   image: [
-    { required: true, message: '请上传SKU图片', trigger: 'change' }
+    { required: true, message: '请上传鞋款图片', trigger: 'change' }
   ]
 }
 
+// 获取分类选项
 async function loadCategoryOptions() {
   try {
+    // 加载所有分类(品牌+风格)
     const allCategories = await getCategoryOptions()
-    categoryOptions.value = allCategories.filter(item => item.type === 2)
+    categoryOptions.value = allCategories
+    // 品牌选项只显示品牌类型（type=1）
     brandOptions.value = await getCategoryOptions(1)
   } catch (error) {
     console.error('获取分类选项失败:', error)
   }
 }
 
+// 获取列表
 async function getList() {
   loading.value = true
   try {
-    const res = await getSpuList(queryParams)
-    const oldDataMap = new Map(tableData.value.map(item => [item.id, item]))
-    tableData.value = (res.records || []).map(item => {
-      const oldItem = oldDataMap.get(item.id)
-      return {
-        ...item,
-        skuList: oldItem?.skuList || [],
-        skuLoading: oldItem?.skuLoading || false,
-        expanded: oldItem?.expanded || false
-      }
-    })
+    const res = await getShoeList(queryParams)
+    tableData.value = res.records || []
     total.value = res.total || 0
   } catch (error) {
-    console.error('获取SPU列表失败:', error)
+    console.error('获取鞋款列表失败:', error)
   } finally {
     loading.value = false
   }
 }
 
+// 搜索
 function handleQuery() {
   queryParams.page = 1
   getList()
 }
 
+// 重置
 function handleReset() {
   queryParams.name = ''
   queryParams.brand = ''
@@ -636,197 +650,91 @@ function handleReset() {
   getList()
 }
 
-async function handleExpandChange(row, expandedRows) {
-  // 检查当前行是否在展开列表中
-  const isExpanded = expandedRows.some(item => item.id === row.id)
-  if (isExpanded) {
-    row.skuLoading = true
-    try {
-      const skuList = await getSkuListBySpuId(row.id)
-      row.skuList = skuList || []
-    } catch (error) {
-      console.error('获取SKU列表失败:', error)
-      row.skuList = []
-    } finally {
-      row.skuLoading = false
-    }
-  }
+// 新增
+function handleAdd() {
+  dialogTitle.value = '新增鞋款'
+  isEdit.value = false
+  dialogVisible.value = true
 }
 
-function handleSelectionChange(selection) {
-  selectedIds.value = selection.map(item => item.id)
-}
-
-function handleAddSpu() {
-  spuDialogTitle.value = '新增SPU'
-  isSpuEdit.value = false
-  spuDialogVisible.value = true
-}
-
-async function handleEditSpu(row) {
-  spuDialogTitle.value = '编辑SPU'
-  isSpuEdit.value = true
+// 编辑
+async function handleEdit(row) {
+  dialogTitle.value = '编辑鞋款'
+  isEdit.value = true
   try {
-    const res = await getSpuById(row.id)
-    Object.assign(spuFormData, {
+    const res = await getShoeById(row.id)
+    Object.assign(formData, {
       id: res.id,
       name: res.name,
-      brand: res.brand || '',
+      brand: res.brand,
       model: res.model || '',
+      color: res.color || '',
       releaseDate: res.releaseDate || null,
       isLimited: res.isLimited || 0,
+      price: res.price,
       categoryIds: res.categoryIds || [],
-      description: res.description || ''
+      image: res.image,
+      description: res.description,
+      sizeStockList: res.sizes || res.sizeStockList || []
     })
-    spuDialogVisible.value = true
+    // 如果没有尺码库存数据，初始化一个空项
+    if (formData.sizeStockList.length === 0) {
+      formData.sizeStockList.push({ size: '', stock: 0 })
+    }
+    dialogVisible.value = true
   } catch (error) {
-    console.error('获取SPU信息失败:', error)
+    console.error('获取鞋款信息失败:', error)
   }
 }
 
-function handleDeleteSpu(row) {
-  ElMessageBox.confirm(`确定要删除SPU"${row.name}"吗？删除后该SPU下所有SKU也将被删除。`, '提示', {
+// 删除
+function handleDelete(row) {
+  ElMessageBox.confirm(`确定要删除鞋款"${row.name}"吗？`, '提示', {
     confirmButtonText: '确定',
     cancelButtonText: '取消',
     type: 'warning'
   }).then(async () => {
-    await deleteSpu(row.id)
+    await deleteShoe(row.id)
     ElMessage.success('删除成功')
     getList()
   }).catch(() => {})
 }
 
-function handleBatchDeleteSpu() {
+// 表格选择变化
+function handleSelectionChange(selection) {
+  selectedIds.value = selection.map(item => item.id)
+}
+
+// 批量删除
+function handleBatchDelete() {
   if (selectedIds.value.length === 0) {
-    ElMessage.warning('请选择要删除的SPU')
+    ElMessage.warning('请选择要删除的鞋款')
     return
   }
-  ElMessageBox.confirm(`确定要删除选中的 ${selectedIds.value.length} 个SPU吗？`, '提示', {
+  ElMessageBox.confirm(`确定要删除选中的 ${selectedIds.value.length} 个鞋款吗？`, '提示', {
     confirmButtonText: '确定',
     cancelButtonText: '取消',
     type: 'warning'
   }).then(async () => {
-    await deleteSpu(selectedIds.value)
+    await deleteShoe(selectedIds.value)
     ElMessage.success('批量删除成功')
     selectedIds.value = []
     getList()
   }).catch(() => {})
 }
 
+// 状态切换（上下架）
 async function handleStatusChange(row) {
   try {
-    await updateSpuStatus(row.status, row.id)
+    await updateShoeStatus(row.status, row.id)
     ElMessage.success(row.status === 1 ? '上架成功' : '下架成功')
   } catch (error) {
+    // 恢复原状态
     row.status = row.status === 1 ? 0 : 1
   }
 }
 
-async function handleSubmitSpu() {
-  const valid = await spuFormRef.value.validate().catch(() => false)
-  if (!valid) return
-
-  submitLoading.value = true
-  try {
-    if (isSpuEdit.value) {
-      await updateSpu(spuFormData)
-      ElMessage.success('修改成功')
-    } else {
-      await addSpu(spuFormData)
-      ElMessage.success('新增成功')
-    }
-    spuDialogVisible.value = false
-    getList()
-  } catch (error) {
-    console.error('提交失败:', error)
-  } finally {
-    submitLoading.value = false
-  }
-}
-
-function handleSpuDialogClose() {
-  spuFormRef.value?.resetFields()
-  Object.assign(spuFormData, {
-    id: null,
-    name: '',
-    brand: '',
-    model: '',
-    releaseDate: null,
-    isLimited: 0,
-    categoryIds: [],
-    description: ''
-  })
-}
-
-function handleAddSku(row) {
-  currentSpuId.value = row.id
-  skuDialogTitle.value = '新增SKU'
-  isSkuEdit.value = false
-  Object.assign(skuFormData, {
-    id: null,
-    spuId: null,
-    colorName: '',
-    price: null,
-    image: '',
-    sizes: [{ size: '', stock: 0 }]
-  })
-  skuDialogVisible.value = true
-}
-
-async function handleEditSku(spu, sku) {
-  currentSpuId.value = spu.id
-  skuDialogTitle.value = '编辑SKU'
-  isSkuEdit.value = true
-  try {
-    const res = await getSkuById(sku.id)
-    Object.assign(skuFormData, {
-      id: res.id,
-      spuId: res.spuId,
-      colorName: res.colorName,
-      price: res.price,
-      image: res.image,
-      sizes: res.sizes && res.sizes.length > 0 ? res.sizes : [{ size: '', stock: 0 }]
-    })
-    skuDialogVisible.value = true
-  } catch (error) {
-    console.error('获取SKU信息失败:', error)
-  }
-}
-
-function handleDeleteSku(spu, sku) {
-  ElMessageBox.confirm(`确定要删除SKU"${sku.colorName}"吗？`, '提示', {
-    confirmButtonText: '确定',
-    cancelButtonText: '取消',
-    type: 'warning'
-  }).then(async () => {
-    await deleteSku(sku.id)
-    ElMessage.success('删除成功')
-    const skuList = await getSkuListBySpuId(spu.id)
-    spu.skuList = skuList || []
-    getList()
-  }).catch(() => {})
-}
-
-async function handleSkuStatusChange(sku) {
-  try {
-    await updateSkuStatus(sku.status, sku.id)
-    ElMessage.success(sku.status === 1 ? '上架成功' : '下架成功')
-  } catch (error) {
-    sku.status = sku.status === 1 ? 0 : 1
-  }
-}
-
-async function handleSetDefaultSku(spu, sku) {
-  try {
-    await setDefaultSku(spu.id, sku.id)
-    ElMessage.success('设置默认成功')
-    const skuList = await getSkuListBySpuId(spu.id)
-    spu.skuList = skuList || []
-  } catch (error) {
-    console.error('设置默认失败:', error)
-  }
-}
-
+// 图片上传前校验
 function beforeImageUpload(file) {
   const isImage = file.type.startsWith('image/')
   const isLt2M = file.size / 1024 / 1024 < 2
@@ -842,64 +750,65 @@ function beforeImageUpload(file) {
   return true
 }
 
+// 图片上传
 async function handleImageUpload(options) {
+  uploadLoading.value = true
   try {
-    const res = await uploadFile(options.file)
-    skuFormData.image = res
+    const res = await uploadShoeImage(options.file)
+    formData.image = res
     ElMessage.success('图片上传成功')
   } catch (error) {
     console.error('图片上传失败:', error)
     ElMessage.error('图片上传失败')
+  } finally {
+    uploadLoading.value = false
   }
 }
 
+// 添加尺码库存项
 function handleAddSizeStock() {
-  skuFormData.sizes.push({ size: '', stock: 0 })
+  formData.sizeStockList.push({ size: '', stock: 0 })
 }
 
+// 删除尺码库存项
 function handleRemoveSizeStock(index) {
-  if (skuFormData.sizes.length > 1) {
-    skuFormData.sizes.splice(index, 1)
+  if (formData.sizeStockList.length > 1) {
+    formData.sizeStockList.splice(index, 1)
   } else {
     ElMessage.warning('至少保留一条尺码库存记录')
   }
 }
 
-async function handleSubmitSku() {
-  const valid = await skuFormRef.value.validate().catch(() => false)
+// 提交表单
+async function handleSubmit() {
+  const valid = await formRef.value.validate().catch(() => false)
   if (!valid) return
 
-  const validSizes = skuFormData.sizes.filter(item => item.size && item.stock >= 0)
-  if (validSizes.length === 0) {
-    ElMessage.warning('请至少添加一条有效的尺码库存')
+  // 校验尺码库存
+  const validSizeStock = formData.sizeStockList.every(item => item.size && item.stock >= 0)
+  if (!validSizeStock) {
+    ElMessage.warning('请完善尺码库存信息')
     return
   }
 
+  // 过滤掉空的尺码库存，转换为后端格式
   const submitData = {
-    id: skuFormData.id,
-    spuId: currentSpuId.value,
-    colorName: skuFormData.colorName,
-    price: skuFormData.price,
-    image: skuFormData.image,
-    sizes: validSizes
+    ...formData,
+    sizes: formData.sizeStockList.filter(item => item.size)
   }
+  delete submitData.sizeStockList
 
   submitLoading.value = true
   try {
-    if (isSkuEdit.value) {
-      await updateSku(submitData)
+    if (isEdit.value) {
+      await updateShoe(submitData)
       ElMessage.success('修改成功')
     } else {
-      await addSku(submitData)
+      await addShoe(submitData)
       ElMessage.success('新增成功')
     }
-    skuDialogVisible.value = false
-    await getList()
-    const spu = tableData.value.find(item => item.id === currentSpuId.value)
-    if (spu) {
-      const skuList = await getSkuListBySpuId(currentSpuId.value)
-      spu.skuList = skuList || []
-    }
+    dialogVisible.value = false
+    getList()
   } catch (error) {
     console.error('提交失败:', error)
   } finally {
@@ -907,27 +816,48 @@ async function handleSubmitSku() {
   }
 }
 
-function handleSkuDialogClose() {
-  skuFormRef.value?.resetFields()
-  Object.assign(skuFormData, {
+// 对话框关闭
+function handleDialogClose() {
+  formRef.value?.resetFields()
+  Object.assign(formData, {
     id: null,
-    spuId: null,
-    colorName: '',
+    name: '',
+    brand: '',
+    model: '',
+    color: '',
+    releaseDate: null,
+    isLimited: 0,
     price: null,
+    categoryIds: [],
     image: '',
-    sizes: [{ size: '', stock: 0 }]
+    description: '',
+    sizeStockList: [{ size: '', stock: 0 }]
   })
 }
 
+// 获取库存标签类型
 function getStockTagType(stock) {
   if (!stock || stock === 0) return 'danger'
   if (stock < 10) return 'warning'
   return 'success'
 }
 
-function parseCategoryNames(names) {
-  if (!names) return []
-  return names.split(',').filter(n => n.trim())
+// 显示库存详情
+async function handleShowStockDetail(row) {
+  try {
+    const res = await getShoeById(row.id)
+    stockDetailData.value = {
+      id: res.id,
+      name: res.name,
+      brand: res.brand,
+      image: res.image,
+      stock: res.stock || row.stock || 0,
+      sizes: res.sizes || []
+    }
+    stockDetailVisible.value = true
+  } catch (error) {
+    console.error('获取库存详情失败:', error)
+  }
 }
 
 onMounted(() => {
@@ -957,49 +887,14 @@ onMounted(() => {
   }
 
   .image-placeholder {
-    width: 50px;
-    height: 50px;
+    width: 60px;
+    height: 60px;
     display: flex;
     align-items: center;
     justify-content: center;
     background-color: #f5f7fa;
     color: #909399;
-    font-size: 16px;
-  }
-
-  .edit-warning {
-    margin-bottom: 12px;
-  }
-}
-
-.sku-expand-container {
-  padding: 15px 30px;
-  background-color: #fafafa;
-
-  .sku-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 15px;
-    padding-bottom: 10px;
-    border-bottom: 1px solid #e4e7ed;
-
-    .sku-title {
-      font-size: 15px;
-      font-weight: 600;
-      color: #303133;
-    }
-  }
-
-  .sku-empty-actions {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 20px 0;
-
-    .el-button {
-      margin-top: 10px;
-    }
+    font-size: 20px;
   }
 }
 
@@ -1046,6 +941,13 @@ onMounted(() => {
   margin-top: 8px;
 }
 
+.form-tip {
+  font-size: 12px;
+  color: #909399;
+  margin-top: 5px;
+  line-height: 1.5;
+}
+
 .size-stock-container {
   width: 100%;
 
@@ -1053,6 +955,69 @@ onMounted(() => {
     display: flex;
     align-items: center;
     margin-bottom: 10px;
+  }
+}
+
+.stock-detail {
+  .shoe-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+
+    .shoe-meta {
+      .shoe-name {
+        font-size: 16px;
+        font-weight: 600;
+        color: #303133;
+      }
+      .shoe-brand {
+        font-size: 14px;
+        color: #909399;
+        margin-top: 5px;
+      }
+    }
+  }
+
+  .stock-list {
+    .stock-header {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 0;
+      font-weight: 600;
+      color: #606266;
+      border-bottom: 1px solid #ebeef5;
+    }
+
+    .stock-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 12px 0;
+      border-bottom: 1px solid #ebeef5;
+
+      &:last-child {
+        border-bottom: none;
+      }
+
+      .col-size {
+        font-size: 14px;
+        color: #303133;
+      }
+    }
+
+    .no-data {
+      text-align: center;
+      color: #909399;
+      padding: 20px 0;
+    }
+  }
+
+  .stock-total {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    font-size: 16px;
+    font-weight: 600;
   }
 }
 </style>

@@ -41,21 +41,3 @@ export function getSkuListBySpuId(spuId) {
     method: 'get'
   })
 }
-
-// 更新SKU状态
-export function updateSkuStatus(status, id) {
-  return request({
-    url: `/admin/shoe/sku/status/${status}`,
-    method: 'post',
-    params: { id }
-  })
-}
-
-// 设置默认SKU
-export function setDefaultSku(spuId, skuId) {
-  return request({
-    url: `/admin/shoe/sku/default/${skuId}`,
-    method: 'post',
-    params: { spuId }
-  })
-}
